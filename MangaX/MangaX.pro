@@ -5,7 +5,12 @@ SOURCES += \
 
 resources.files = main.qml 
 resources.prefix = /$${TARGET}
-RESOURCES += resources
+RESOURCES += resources \
+    qrc.qrc
+
+LIBS += -L"/usr/include/python3.8/" -lpython3.8
+INCLUDEPATH += /usr/include/python3.8/
+DEPENDPATH += /usr/include/python3.8/
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =

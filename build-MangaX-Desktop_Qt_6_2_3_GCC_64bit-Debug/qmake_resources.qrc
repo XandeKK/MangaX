@@ -1,0 +1,5 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource prefix="/MangaX">
+<file alias="main.qml">/home/alexandre/Documents/GitHub/MangaX/MangaX/main.qml</file>
+</qresource>
+</RCC>

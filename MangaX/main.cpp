@@ -1,13 +1,13 @@
+#include <Python.h>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
-
 
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
 
     QQmlApplicationEngine engine;
-    const QUrl url(u"qrc:/MangaX/main.qml"_qs);
+    const QUrl url("qrc:/main.qml");
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
                      &app, [url](QObject *obj, const QUrl &objUrl) {
         if (!obj && url == objUrl)
