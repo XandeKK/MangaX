@@ -15,9 +15,8 @@ Item {
     NumberAnimation {
         id: anim
         target: rectButtonAdd
-        property: "name"
-        duration: 200
-        easing.type: Easing.InOutQuad
+        duration: 100
+        easing.type: Easing.OutElastic
     }
 
     ListView {
