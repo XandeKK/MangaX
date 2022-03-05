@@ -52,11 +52,13 @@ OBJECTS_DIR   = ./
 
 ####### Files
 
-SOURCES       = ../MangaX/main.cpp qrc_qrc.cpp \
-		qrc_qmake_resources.cpp
+SOURCES       = ../MangaX/main.cpp \
+		../MangaX/src/database.cpp qrc_qml.cpp \
+		moc_database.cpp
 OBJECTS       = main.o \
-		qrc_qrc.o \
-		qrc_qmake_resources.o
+		database.o \
+		qrc_qml.o \
+		moc_database.o
 DIST          = ../../../../Qt/6.2.3/gcc_64/mkspecs/features/spec_pre.prf \
 		../../../../Qt/6.2.3/gcc_64/mkspecs/common/unix.conf \
 		../../../../Qt/6.2.3/gcc_64/mkspecs/common/linux.conf \
@@ -307,7 +309,8 @@ DIST          = ../../../../Qt/6.2.3/gcc_64/mkspecs/features/spec_pre.prf \
 		../../../../Qt/6.2.3/gcc_64/mkspecs/features/exceptions.prf \
 		../../../../Qt/6.2.3/gcc_64/mkspecs/features/yacc.prf \
 		../../../../Qt/6.2.3/gcc_64/mkspecs/features/lex.prf \
-		../MangaX/MangaX.pro  ../MangaX/main.cpp
+		../MangaX/MangaX.pro ../MangaX/src/database.h ../MangaX/main.cpp \
+		../MangaX/src/database.cpp
 QMAKE_TARGET  = MangaX
 DESTDIR       = 
 TARGET        = MangaX
@@ -570,8 +573,7 @@ Makefile: ../MangaX/MangaX.pro ../../../../Qt/6.2.3/gcc_64/mkspecs/linux-g++/qma
 		../../../../Qt/6.2.3/gcc_64/mkspecs/features/yacc.prf \
 		../../../../Qt/6.2.3/gcc_64/mkspecs/features/lex.prf \
 		../MangaX/MangaX.pro \
-		../MangaX/qrc.qrc \
-		qmake_resources.qrc \
+		../MangaX/qml.qrc \
 		../../../../Qt/6.2.3/gcc_64/lib/libQt6Quick.prl \
 		../../../../Qt/6.2.3/gcc_64/lib/libQt6OpenGL.prl \
 		../../../../Qt/6.2.3/gcc_64/lib/libQt6Gui.prl \
@@ -831,8 +833,7 @@ Makefile: ../MangaX/MangaX.pro ../../../../Qt/6.2.3/gcc_64/mkspecs/linux-g++/qma
 ../../../../Qt/6.2.3/gcc_64/mkspecs/features/yacc.prf:
 ../../../../Qt/6.2.3/gcc_64/mkspecs/features/lex.prf:
 ../MangaX/MangaX.pro:
-../MangaX/qrc.qrc:
-qmake_resources.qrc:
+../MangaX/qml.qrc:
 ../../../../Qt/6.2.3/gcc_64/lib/libQt6Quick.prl:
 ../../../../Qt/6.2.3/gcc_64/lib/libQt6OpenGL.prl:
 ../../../../Qt/6.2.3/gcc_64/lib/libQt6Gui.prl:
@@ -854,9 +855,10 @@ dist: distdir FORCE
 distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
-	$(COPY_FILE) --parents ../MangaX/qrc.qrc qmake_resources.qrc $(DISTDIR)/
+	$(COPY_FILE) --parents ../MangaX/qml.qrc $(DISTDIR)/
 	$(COPY_FILE) --parents ../../../../Qt/6.2.3/gcc_64/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents ../MangaX/main.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents ../MangaX/src/database.h $(DISTDIR)/
+	$(COPY_FILE) --parents ../MangaX/main.cpp ../MangaX/src/database.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -880,18 +882,16 @@ check: first
 
 benchmark: first
 
-compiler_rcc_make_all: qrc_qrc.cpp qrc_qmake_resources.cpp
+compiler_rcc_make_all: qrc_qml.cpp
 compiler_rcc_clean:
-	-$(DEL_FILE) qrc_qrc.cpp qrc_qmake_resources.cpp
-qrc_qrc.cpp: ../MangaX/qrc.qrc \
+	-$(DEL_FILE) qrc_qml.cpp
+qrc_qml.cpp: ../MangaX/qml.qrc \
 		../../../../Qt/6.2.3/gcc_64/libexec/rcc \
-		../MangaX/main.qml
-	/home/alexandre/Qt/6.2.3/gcc_64/libexec/rcc -name qrc ../MangaX/qrc.qrc -o qrc_qrc.cpp
-
-qrc_qmake_resources.cpp: qmake_resources.qrc \
-		../../../../Qt/6.2.3/gcc_64/libexec/rcc \
-		../MangaX/main.qml
-	/home/alexandre/Qt/6.2.3/gcc_64/libexec/rcc -name qmake_resources qmake_resources.qrc -o qrc_qmake_resources.cpp
+		../MangaX/qml/NewScreen.qml \
+		../MangaX/qml/main.qml \
+		../MangaX/qml/OldScreen.qml \
+		../MangaX/qml/MainScreen.qml
+	/home/alexandre/Qt/6.2.3/gcc_64/libexec/rcc -name qml ../MangaX/qml.qrc -o qrc_qml.cpp
 
 compiler_moc_predefs_make_all: moc_predefs.h
 compiler_moc_predefs_clean:
@@ -899,8 +899,80 @@ compiler_moc_predefs_clean:
 moc_predefs.h: ../../../../Qt/6.2.3/gcc_64/mkspecs/features/data/dummy.cpp
 	g++ -pipe -g -std=gnu++1z -Wall -Wextra -dM -E -o moc_predefs.h ../../../../Qt/6.2.3/gcc_64/mkspecs/features/data/dummy.cpp
 
-compiler_moc_header_make_all:
+compiler_moc_header_make_all: moc_database.cpp
 compiler_moc_header_clean:
+	-$(DEL_FILE) moc_database.cpp
+moc_database.cpp: ../MangaX/src/database.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/QObject \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qobject.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qobjectdefs.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qnamespace.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qglobal.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qconfig-bootstrapped.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qconfig.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qtcore-config.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qsystemdetection.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qprocessordetection.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qcompilerdetection.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qtypeinfo.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qcontainerfwd.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qsysinfo.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qlogging.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qflags.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qatomic.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qbasicatomic.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qatomic_bootstrap.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qgenericatomic.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qatomic_cxx11.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qglobalstatic.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qnumeric.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qversiontagging.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qtmetamacros.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qobjectdefs_impl.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qstring.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qchar.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qstringview.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qbytearray.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qrefcount.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qarraydata.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qpair.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qarraydatapointer.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qarraydataops.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qcontainertools_impl.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qbytearrayalgorithms.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qbytearrayview.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qstringliteral.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qstringalgorithms.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qanystringview.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qutf8stringview.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qstringtokenizer.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qstringbuilder.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qlist.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qhashfunctions.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qiterator.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qbytearraylist.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qstringlist.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qalgorithms.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qstringmatcher.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qcoreevent.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qscopedpointer.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qmetatype.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qcompare.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qvarlengtharray.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qscopeguard.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qdatastream.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qiodevicebase.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qiterable.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qmetacontainer.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qcontainerinfo.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qtaggedpointer.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qmath.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qobject_impl.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qbindingstorage.h \
+		moc_predefs.h \
+		../../../../Qt/6.2.3/gcc_64/libexec/moc
+	/home/alexandre/Qt/6.2.3/gcc_64/libexec/moc $(DEFINES) --include /home/alexandre/Documents/GitHub/MangaX/build-MangaX-Desktop_Qt_6_2_3_GCC_64bit-Debug/moc_predefs.h -I/home/alexandre/Qt/6.2.3/gcc_64/mkspecs/linux-g++ -I/home/alexandre/Documents/GitHub/MangaX/MangaX -I/usr/include/python3.8 -I/home/alexandre/Qt/6.2.3/gcc_64/include -I/home/alexandre/Qt/6.2.3/gcc_64/include/QtQuick -I/home/alexandre/Qt/6.2.3/gcc_64/include/QtOpenGL -I/home/alexandre/Qt/6.2.3/gcc_64/include/QtGui -I/home/alexandre/Qt/6.2.3/gcc_64/include/QtQmlModels -I/home/alexandre/Qt/6.2.3/gcc_64/include/QtQml -I/home/alexandre/Qt/6.2.3/gcc_64/include/QtNetwork -I/home/alexandre/Qt/6.2.3/gcc_64/include/QtCore -I. -I/usr/include/c++/9 -I/usr/include/x86_64-linux-gnu/c++/9 -I/usr/include/c++/9/backward -I/usr/lib/gcc/x86_64-linux-gnu/9/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include ../MangaX/src/database.h -o moc_database.cpp
+
 compiler_moc_objc_header_make_all:
 compiler_moc_objc_header_clean:
 compiler_moc_source_make_all:
@@ -911,7 +983,7 @@ compiler_yacc_impl_make_all:
 compiler_yacc_impl_clean:
 compiler_lex_make_all:
 compiler_lex_clean:
-compiler_clean: compiler_rcc_clean compiler_moc_predefs_clean 
+compiler_clean: compiler_rcc_clean compiler_moc_predefs_clean compiler_moc_header_clean 
 
 ####### Compile
 
@@ -1047,11 +1119,80 @@ main.o: ../MangaX/main.cpp ../../../../Qt/6.2.3/gcc_64/include/QtGui/QGuiApplica
 		../../../../Qt/6.2.3/gcc_64/include/QtQml/qqmlabstracturlinterceptor.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o ../MangaX/main.cpp
 
-qrc_qrc.o: qrc_qrc.cpp 
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o qrc_qrc.o qrc_qrc.cpp
+database.o: ../MangaX/src/database.cpp ../MangaX/src/database.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/QObject \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qobject.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qobjectdefs.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qnamespace.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qglobal.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qconfig-bootstrapped.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qconfig.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qtcore-config.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qsystemdetection.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qprocessordetection.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qcompilerdetection.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qtypeinfo.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qcontainerfwd.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qsysinfo.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qlogging.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qflags.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qatomic.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qbasicatomic.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qatomic_bootstrap.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qgenericatomic.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qatomic_cxx11.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qglobalstatic.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qnumeric.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qversiontagging.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qtmetamacros.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qobjectdefs_impl.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qstring.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qchar.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qstringview.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qbytearray.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qrefcount.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qarraydata.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qpair.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qarraydatapointer.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qarraydataops.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qcontainertools_impl.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qbytearrayalgorithms.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qbytearrayview.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qstringliteral.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qstringalgorithms.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qanystringview.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qutf8stringview.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qstringtokenizer.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qstringbuilder.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qlist.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qhashfunctions.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qiterator.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qbytearraylist.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qstringlist.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qalgorithms.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qstringmatcher.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qcoreevent.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qscopedpointer.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qmetatype.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qcompare.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qvarlengtharray.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qscopeguard.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qdatastream.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qiodevicebase.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qiterable.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qmetacontainer.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qcontainerinfo.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qtaggedpointer.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qmath.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qobject_impl.h \
+		../../../../Qt/6.2.3/gcc_64/include/QtCore/qbindingstorage.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o database.o ../MangaX/src/database.cpp
 
-qrc_qmake_resources.o: qrc_qmake_resources.cpp 
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o qrc_qmake_resources.o qrc_qmake_resources.cpp
+qrc_qml.o: qrc_qml.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o qrc_qml.o qrc_qml.cpp
+
+moc_database.o: moc_database.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_database.o moc_database.cpp
 
 ####### Install
 

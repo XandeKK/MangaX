@@ -4,10 +4,9 @@ SOURCES += \
         main.cpp \
         src/database.cpp
 
-resources.files = main.qml 
-resources.prefix = /$${TARGET}
-RESOURCES += resources \
-    qrc.qrc
+#resources.files = qml/main.qml
+#resources.prefix = /$${TARGET}
+RESOURCES += qml.qrc
 
 LIBS += -L"/usr/include/python3.8/" -lpython3.8
 INCLUDEPATH += /usr/include/python3.8/
