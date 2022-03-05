@@ -3,8 +3,7 @@
 
 #include <QObject>
 #include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QSqlRecord>
+
 
 class Database : public QObject
 {
@@ -22,7 +21,6 @@ public:
 
 private:
     QSqlDatabase m_db;
-    QSqlQuery query;
 
 signals:
 

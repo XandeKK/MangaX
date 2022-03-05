@@ -1,4 +1,6 @@
 #include "database.h"
+#include <QSqlQuery>
+#include <QSqlRecord>
 
 Database::Database(QObject *parent)
     : QObject{parent}
@@ -19,11 +21,13 @@ void Database::openDatabase() {
 
 void Database::createTable()
 {
-    query.exec("CREATE TABLE IF NOT EXISTS manga(name VARCHAR(255) NOT NULL UNIQUE, url VARCHAR(255) NOT NULL, chapter INT not null");
+    QSqlQuery query;
+    query.exec("CREATE TABLE IF NOT EXISTS manga(name VARCHAR(255) NOT NULL UNIQUE, url VARCHAR(255) NOT NULL, chapter INT not null)");
 }
 
 void Database::addManga(QString &name, QString &url, QString &chapter)
 {
+    QSqlQuery query;
     query.prepare("INSERT INTO manga VALUES (:name, :url, :chapter)");
     query.bindValue(":name", name);
     query.bindValue(":url", url);
@@ -33,6 +37,7 @@ void Database::addManga(QString &name, QString &url, QString &chapter)
 
 void Database::removeManga(QString &name)
 {
+    QSqlQuery query;
     query.prepare("DELETE FROM manga WHERE name = :name");
     query.bindValue(":name", name);
     query.exec();
