@@ -7,5 +7,6 @@
         <file>Assets/threeDotsWhite.png</file>
         <file>Assets/threeDotsBlack.png</file>
         <file>qml/AddManga.qml</file>
+        <file>qml/EditManga.qml</file>
     </qresource>
 </RCC>

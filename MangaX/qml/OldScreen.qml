@@ -117,6 +117,7 @@ Item {
                     id: mouseArea
                     anchors.fill: parent
                     onClicked: {
+                        _database.openManga(url)
                     }
                 }
 
@@ -141,7 +142,7 @@ Item {
                                     "url": url,
                                     "cap": currentChapter
                                 }
-//                                stack.push("")
+                                stack.push("qrc:/qml/EditManga.qml")
                             }
                         }
                         MenuItem {

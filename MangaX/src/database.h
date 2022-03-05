@@ -19,6 +19,7 @@ public:
     Q_INVOKABLE void removeManga(QString &name);
     Q_INVOKABLE void editManga(QString &nameOld, QString &name, QString &url, QString &chapter);
     Q_INVOKABLE void readedManga(QString &name, QString &chapterNew);
+    Q_INVOKABLE void openManga(QString &url);
 
     Q_INVOKABLE QByteArray getListNewChapter();
     Q_INVOKABLE QByteArray getListOldChapter();

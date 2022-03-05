@@ -124,6 +124,7 @@ Item {
                     id: mouseArea
                     anchors.fill: parent
                     onClicked: {
+                        _database.openManga(url)
 //                        _database.readedManga(name, newChapter)
                         varListModelOld.append({"name": name,
                                                    "url": url,
@@ -153,7 +154,7 @@ Item {
                                     "url": url,
                                     "cap": currentChapter
                                 }
-//                                stack.push("")
+                                stack.push("qrc:/qml/EditManga.qml")
                             }
                         }
                         MenuItem {

@@ -4,6 +4,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QProcess>
 
 Database::Database(QObject *parent)
     : QObject{parent}
@@ -104,6 +105,13 @@ void Database::readedManga(QString &name, QString &chapterNew)
     query.bindValue(":name", name);
 
     query.exec();
+}
+
+void Database::openManga(QString &url)
+{
+    QProcess* process = new QProcess();
+    QString program = "xdg-open " + url;
+    process->start("sh", QStringList() << "-c" << program);
 }
 
 QByteArray Database::getListNewChapter()
