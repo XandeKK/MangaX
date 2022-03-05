@@ -11,6 +11,8 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
 
     Database db;
+    db.openDatabase();
+    db.createTable();
 
     QQmlApplicationEngine engine;
     const QUrl url("qrc:/qml/main.qml");
