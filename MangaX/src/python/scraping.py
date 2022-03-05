@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup;
 import cfscrape;
 
+# Database
 def openDatabase():
     import sqlite3;
 
@@ -35,6 +36,7 @@ def updateAvailableBanco(name: str, new_chapter: str):
 
     closeDatabase(connection);
 
+# WebScraping
 
 def scrapWeb(url: str):
     scraper = cfscrape.create_scraper();

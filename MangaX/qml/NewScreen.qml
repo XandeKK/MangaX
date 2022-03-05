@@ -124,10 +124,10 @@ Item {
                     id: mouseArea
                     anchors.fill: parent
                     onClicked: {
+//                        _database.readedManga(name, newChapter)
                         varListModelOld.append({"name": name,
                                                    "url": url,
-                                                   "currentChapter": currentChapter,
-                                                   "newChapter": newChapter})
+                                                   "currentChapter": newChapter})
                         listModelNew.remove(index)
                     }
                 }

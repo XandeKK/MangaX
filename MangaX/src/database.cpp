@@ -40,7 +40,7 @@ void Database::selectAllChapter()
     QJsonArray arrayNew;
     QJsonArray arrayOld;
 
-    QSqlQuery query("SELECT * FROM manga");
+    QSqlQuery query("SELECT * FROM manga ORDER BY name ASC");
     int idName = query.record().indexOf("name");
     int idUrl = query.record().indexOf("url");
     int idCurrentChapter = query.record().indexOf("current_chapter");
@@ -94,6 +94,16 @@ void Database::editManga(QString &nameOld, QString &name, QString &url, QString 
 {
     removeManga(nameOld);
     addManga(name, url, chapter);
+}
+
+void Database::readedManga(QString &name, QString &chapterNew)
+{
+    QSqlQuery query;
+    query.prepare("UPDATE manga set current_chapter = :current_chapter, available = 'no' where name = :name");
+    query.bindValue(":current_chapter", chapterNew);
+    query.bindValue(":name", name);
+
+    query.exec();
 }
 
 QByteArray Database::getListNewChapter()
