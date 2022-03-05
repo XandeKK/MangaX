@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup;
 import cfscrape;
+import subprocess
 
 # Database
 def openDatabase():
@@ -47,19 +48,36 @@ def scrapWeb(url: str):
 
 
 def scrapWebMangaLivre(url: str):
-    scraper = cfscrape.create_scraper();
-    html = scraper.get(url).content;
+    try:
+        scraper = cfscrape.create_scraper();
+        html = scraper.get(url).content;
 
-    soup = BeautifulSoup(html, 'html.parser');
-    div = soup.find("div", class_="container-box default color-brown");
+        soup = BeautifulSoup(html, 'html.parser');
 
-    chapter = div.find("span").string;
+        div = soup.find("div", class_="container-box default color-brown");
 
-    return chapter;
+        chapter = div.find("span").string;
+
+        return chapter;
+    except:
+        try:
+            html = subprocess.check_output(f"wget {url} -O - -q", shell=True)
+
+            soup = BeautifulSoup(html, 'html.parser');
+
+            div = soup.find("div", class_="container-box default color-brown");
+
+            chapter = div.find("span").string;
+
+            return chapter;
+        except:
+            return 0;
 
 
 def verifyNewChapter():
-    for manga in selectDatabase():
+    percent = 100 / len(selectDatabase());
+    for enum, manga in enumerate(selectDatabase()):
+        print(f"loading {percent*(enum+1)}%")
         name: str = manga[0];
         url: str = manga[1];
         current_chapter: int = int(manga[2]);
@@ -71,4 +89,4 @@ def verifyNewChapter():
         else: # o dominio do site de manga
             pass;
 
-#verifyNewChapter();
+verifyNewChapter();

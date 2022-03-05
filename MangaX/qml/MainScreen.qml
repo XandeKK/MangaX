@@ -5,6 +5,18 @@ import QtQuick.Controls.Material 2.15
 
 Page {
     property var varListModelOld
+    Component.onCompleted: {
+//        _database.updateManga()
+        _database.selectAllChapter()
+    }
+
+    BusyIndicator {
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter: parent.verticalCenter
+        running: true
+        Material.accent: Material.Blue
+    }
+
     Action {
         shortcut: "Ctrl+1"
         onTriggered: tabBar.currentIndex = 0

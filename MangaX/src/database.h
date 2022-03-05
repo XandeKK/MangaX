@@ -14,6 +14,8 @@ public:
     void openDatabase();
     void createTable();
 
+    Q_INVOKABLE void updateManga();
+
     Q_INVOKABLE void selectAllChapter();
     Q_INVOKABLE void addManga(QString &name, QString &url, QString &chapter);
     Q_INVOKABLE void removeManga(QString &name);
