@@ -89,6 +89,9 @@ Item {
                 clip: true
                 anchors.rightMargin: parent.width * 2.5 / 100
                 anchors.leftMargin: parent.width * 4 /100
+                color: "white"
+                selectionColor: "#2196F3"
+                selectByMouse: true
 
                 KeyNavigation.tab: inputUrl
 
@@ -129,6 +132,9 @@ Item {
                 clip: true
                 anchors.rightMargin: parent.width * 2.5 / 100
                 anchors.leftMargin: parent.width * 4 /100
+                color: "white"
+                selectionColor: "#2196F3"
+                selectByMouse: true
 
                 KeyNavigation.tab: inputChapter
 
@@ -168,6 +174,9 @@ Item {
                 inputMethodHints: Qt.ImhDigitsOnly
                 clip: true
                 anchors.rightMargin: parent.width * 15 / 100
+                color: "white"
+                selectionColor: "#2196F3"
+                selectByMouse: true
 
                 Text {
                     id: textChapter
@@ -197,7 +206,12 @@ Item {
         Button {
             id: button
             anchors.fill: parent
-            onClicked:{}
+            onClicked:{
+                if(inputManga != "" && inputUrl != "" && inputChapter != ""){
+                    _database.addManga(inputManga.text, inputUrl.text, inputChapter.text)
+                    stack.pop() // Colocar um aviso que a operação deu certo.
+                }
+            }
 
             background: Rectangle{
                 color: button.down ? "#3F51B5" : "#2196F3"

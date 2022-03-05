@@ -9,6 +9,8 @@ ApplicationWindow {
     visible: true
     title: qsTr("MangaX")
 
+    Component.onCompleted: _database.selectAllChapter()
+
     readonly property real dip: Screen.pixelDensity / (96 / 25.4)
     property string backgroundColorInput: "#4D4D4D"
 

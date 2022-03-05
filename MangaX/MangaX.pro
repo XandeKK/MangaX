@@ -1,5 +1,6 @@
 QT += quick
 QT += sql
+QT += core
 
 SOURCES += \
         main.cpp \
