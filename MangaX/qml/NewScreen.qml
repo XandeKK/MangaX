@@ -1,15 +1,45 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Controls.Material 2.15
 
 Item {
     anchors.fill: parent
+
+    Rectangle {
+        id: rectTop
+        color: "#00000000"
+        width: parent.width
+        height: 25
+    }
+
+    NumberAnimation {
+        id: anim
+        target: rectButtonAdd
+        property: "name"
+        duration: 200
+        easing.type: Easing.InOutQuad
+    }
+
     ListView {
         id: listView
-        anchors.fill: parent
-//        boundsMovement: Flickable.StopAtBounds
+        anchors.top: rectTop.bottom
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        boundsMovement: Flickable.StopAtBounds
         interactive: true
-        clip: true
-        spacing: 10
+        spacing: 4
+        onFlickingChanged: {
+            if(listView.atYBeginning == false && listView.atYEnd == true){
+                anim.property = "anchors.bottomMargin"
+                anim.to = rectButtonAdd.bottomMarginButtonAdd + 60
+                anim.running = true
+            }else{
+                anim.property = "anchors.bottomMargin"
+                anim.to = rectButtonAdd.bottomMarginButtonAdd
+                anim.running = true
+            }
+        }
 
         Component {
             id: myDelegate
@@ -27,7 +57,7 @@ Item {
                     width: parent.width * 90 / 100
                     font.pointSize: 9 * dip
                     text: "Manga: " + name
-                    color: mouseArea.pressed ? "blue" : "white"
+                    color: "white"
                     wrapMode: Text.WordWrap
                     clip: true
                 }
@@ -38,10 +68,10 @@ Item {
                     anchors.left: parent.left
                     anchors.leftMargin: parent.width * 2.5 / 100
                     height: 20
-                    width: parent.width * 70 / 100
+                    width: parent.width * 60 / 100
                     font.pointSize: 9 * dip
                     text: "Site: " + site
-                    color: mouseArea.pressed ? "blue" : "white"
+                    color: "white"
                     wrapMode: Text.WordWrap
                     clip: true
                 }
@@ -55,23 +85,48 @@ Item {
                     width: parent.width * 20 / 100
                     font.pointSize: 9 * dip
                     text: "cap.: " + cap
-                    color: mouseArea.pressed ? "blue" : "white"
+                    color: "white"
                     wrapMode: Text.WordWrap
                     clip: true
-                }
-                Image {
-                    id: optionItem
-                    source: ""
                 }
 
                 MouseArea {
                     id: mouseArea
                     anchors.fill: parent
                 }
+
+                Image {
+                    id: optionItem
+                    source: "qrc:/Assets/threeDotsWhite.png"
+                    anchors.left: textManga.right
+                    anchors.leftMargin: parent.height * 2.5 / 100
+                    anchors.top: parent.top
+                    anchors.topMargin: parent.height * 10 / 100
+                    height: 20
+                    width: 20
+                    fillMode: Image.PreserveAspectFit
+
+                    Menu {
+                        id: menu
+                        MenuItem {
+                            text: "edit"
+                            onTriggered: console.log("edit")
+                        }
+                        MenuItem {
+                            text: "delete"
+                            onTriggered: console.log("delete")
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: menu.open()
+                    }
+                }
+
                 Rectangle {
-                    anchors.bottom: parent.bottom
-                    width: parent.width
-                    height: 1
+                    anchors.fill: parent
+                    color: mouseArea.pressed ? "#33000000" : "#00000000"
                 }
             }
 
@@ -83,7 +138,17 @@ Item {
             id: listModel
             ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
             ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
-            ListElement {name: "Yoku Wakaranai keredo Isekai ni Tensei shiteita you desu"}
+            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
+            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
+            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
+            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
+            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
+            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
+            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
+            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
+            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
+            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
+
         }
     }
 }

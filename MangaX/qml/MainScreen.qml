@@ -4,6 +4,19 @@ import QtQuick.Layouts 1.15
 import QtQuick.Controls.Material 2.15
 
 Page {
+    Action {
+        shortcut: "Ctrl+1"
+        onTriggered: tabBar.currentIndex = 0
+    }
+    Action {
+        shortcut: "Ctrl+2"
+        onTriggered: tabBar.currentIndex = 1
+    }
+    Action {
+        shortcut: "Ctrl+Tab"
+        onTriggered: tabBar.currentIndex = tabBar.currentIndex == 0 ? 1 : 0
+    }
+
     SwipeView {
         id: swipeView
         anchors.top: parent.top
@@ -13,23 +26,24 @@ Page {
         currentIndex: tabBar.currentIndex
 
         Loader {
-            active: SwipeView.isCurrentItem
             sourceComponent: NewScreen {}
         }
         Loader {
-            active: SwipeView.isCurrentItem
             sourceComponent: OldScreen {}
         }
     }
 
     Rectangle {
+        property int bottomMarginButtonAdd: parent.height * 7.5 / 100
+        property int leftMarginButtonAdd: parent.width * 2.5 / 100 + 30
+
         id: rectButtonAdd
         width: 50
         height: 50
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: parent.height * 7.5 / 100
+        anchors.bottomMargin: bottomMarginButtonAdd
         anchors.right: parent.right
-        anchors.rightMargin: parent.width * 4 / 100
+        anchors.rightMargin: leftMarginButtonAdd
         color: mouseAreaAdd.pressed ? Material.color(Material.Blue, Material.Shade700) : Material.color(Material.Blue)
         radius: 50
 
@@ -42,9 +56,20 @@ Page {
 
         MouseArea {
             id: mouseAreaAdd
-            onClicked: stack.push("")
+            onClicked: stack.push("qrc:/qml/AddManga.qml")
             anchors.fill: parent
         }
+    }
+
+    Rectangle {
+        width: parent.width
+        height: 5
+        z: 1
+        anchors.bottom: tabBar.top
+        gradient: Gradient {
+                GradientStop { position: 0.0; color: "#00000000" }
+                GradientStop { position: 1.0; color: "#33000000" }
+            }
     }
 
     TabBar {

@@ -10,7 +10,7 @@ ApplicationWindow {
     title: qsTr("MangaX")
 
     readonly property real dip: Screen.pixelDensity / (96 / 25.4)
-    property string backgroundColorInput: "#ECECEC"
+    property string backgroundColorInput: "#4D4D4D"
 
     Material.theme: Material.Dark
 

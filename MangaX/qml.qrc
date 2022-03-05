@@ -6,5 +6,6 @@
         <file>qml/OldScreen.qml</file>
         <file>Assets/threeDotsWhite.png</file>
         <file>Assets/threeDotsBlack.png</file>
+        <file>qml/AddManga.qml</file>
     </qresource>
 </RCC>
