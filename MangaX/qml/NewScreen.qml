@@ -93,10 +93,17 @@ Item {
                     height: 20
                     width: parent.width * 60 / 100
                     font.pointSize: 9 * dip
-                    text: "Site: " + url
+                    text: "Site: " + urlFunc()
                     color: "white"
                     wrapMode: Text.WordWrap
                     clip: true
+
+                    function urlFunc(){
+                        let leturl = url.toString()
+                        leturl = leturl.replace("https://", "")
+                        leturl = leturl.split(".")[0]
+                        return leturl
+                    }
                 }
                 Text {
                     id: textCap

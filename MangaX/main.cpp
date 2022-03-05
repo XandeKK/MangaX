@@ -14,6 +14,16 @@ int main(int argc, char *argv[])
     db.openDatabase();
     db.createTable();
 
+    char filename[] = "/home/alexandre/Documents/GitHub/MangaX/MangaX/src/python/scraping.py";
+    FILE *fp;
+
+    Py_Initialize();
+
+    fp = _Py_fopen(filename, "r");
+    PyRun_SimpleFile(fp, filename);
+
+    Py_Finalize();
+
     QQmlApplicationEngine engine;
     const QUrl url("qrc:/qml/main.qml");
     engine.rootContext()->setContextProperty( "_database", &db );

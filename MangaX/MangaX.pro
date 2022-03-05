@@ -29,5 +29,4 @@ HEADERS += \
     src/database.h
 
 DISTFILES += \
-    src/python/database.py \
     src/python/scraping.py
