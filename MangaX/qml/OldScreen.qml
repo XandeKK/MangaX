@@ -5,6 +5,29 @@ import QtQuick.Controls.Material 2.15
 Item {
     anchors.fill: parent
 
+    Timer {
+        id: timer
+        interval: 1000
+        running: true
+        repeat: true
+        onTriggered: {
+            let dataJson = _database.getListOldChapter()
+
+            dataJson = JSON.parse(dataJson)
+
+            if(dataJson.length > 0){
+                running = false
+                for(let i=0; i<dataJson.length; i++){
+                    listModel.append({"name": dataJson[i]["name"],
+                                         "url": dataJson[i]["url"],
+                                         "currentChapter": dataJson[i]["currentChapter"],
+                                         "newChapter": dataJson[i]["newChapter"]})
+                }
+
+            }
+        }
+    }
+
     Rectangle {
         id: rectTop
         color: "#00000000"
@@ -15,8 +38,9 @@ Item {
     NumberAnimation {
         id: anim
         target: rectButtonAdd
-        duration: 100
-        easing.type: Easing.OutElastic
+        property: "name"
+        duration: 200
+        easing.type: Easing.InOutQuad
     }
 
     ListView {
@@ -69,7 +93,7 @@ Item {
                     height: 20
                     width: parent.width * 60 / 100
                     font.pointSize: 9 * dip
-                    text: "Site: " + site
+                    text: "Site: " + url
                     color: "white"
                     wrapMode: Text.WordWrap
                     clip: true
@@ -83,7 +107,7 @@ Item {
                     height: 20
                     width: parent.width * 20 / 100
                     font.pointSize: 9 * dip
-                    text: "cap.: " + cap
+                    text: "Cap.: " + currentChapter
                     color: "white"
                     wrapMode: Text.WordWrap
                     clip: true
@@ -92,6 +116,7 @@ Item {
                 MouseArea {
                     id: mouseArea
                     anchors.fill: parent
+                    onClicked: console.log(name)
                 }
 
                 Image {
@@ -113,7 +138,10 @@ Item {
                         }
                         MenuItem {
                             text: "delete"
-                            onTriggered: console.log("delete")
+                            onTriggered: {
+                                _database.removeManga(name)
+                                listModel.remove(index)
+                            }
                         }
                     }
 
@@ -135,18 +163,18 @@ Item {
 
         model: ListModel{
             id: listModel
-            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
-            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
-            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
-            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
-            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
-            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
-            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
-            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
-            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
-            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
-            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
-            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
+            //            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
+            //            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
+            //            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
+            //            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
+            //            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
+            //            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
+            //            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
+            //            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
+            //            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
+            //            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
+            //            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
+            //            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
 
         }
     }

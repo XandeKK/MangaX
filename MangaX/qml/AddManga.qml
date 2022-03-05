@@ -207,7 +207,7 @@ Item {
             id: button
             anchors.fill: parent
             onClicked:{
-                if(inputManga != "" && inputUrl != "" && inputChapter != ""){
+                if(inputManga.text != "" && inputUrl.text != "" && inputChapter.text != ""){
                     _database.addManga(inputManga.text, inputUrl.text, inputChapter.text)
                     stack.pop() // Colocar um aviso que a operação deu certo.
                 }
