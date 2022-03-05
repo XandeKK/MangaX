@@ -4,5 +4,7 @@
         <file>qml/MainScreen.qml</file>
         <file>qml/NewScreen.qml</file>
         <file>qml/OldScreen.qml</file>
+        <file>Assets/threeDotsWhite.png</file>
+        <file>Assets/threeDotsBlack.png</file>
     </qresource>
 </RCC>
