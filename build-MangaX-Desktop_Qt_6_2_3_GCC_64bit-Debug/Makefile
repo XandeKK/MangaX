@@ -887,8 +887,11 @@ compiler_rcc_clean:
 	-$(DEL_FILE) qrc_qml.cpp
 qrc_qml.cpp: ../MangaX/qml.qrc \
 		../../../../Qt/6.2.3/gcc_64/libexec/rcc \
+		../MangaX/Assets/threeDotsWhite.png \
+		../MangaX/Assets/threeDotsBlack.png \
 		../MangaX/qml/NewScreen.qml \
 		../MangaX/qml/main.qml \
+		../MangaX/qml/AddManga.qml \
 		../MangaX/qml/OldScreen.qml \
 		../MangaX/qml/MainScreen.qml
 	/home/alexandre/Qt/6.2.3/gcc_64/libexec/rcc -name qml ../MangaX/qml.qrc -o qrc_qml.cpp
