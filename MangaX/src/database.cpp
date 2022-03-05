@@ -37,15 +37,9 @@ void Database::createTable()
 
 void Database::updateManga()
 {
-    char filename[] = "/home/alexandre/Documents/GitHub/MangaX/MangaX/src/python/scraping.py";
-    FILE *fp;
-
-    Py_Initialize();
-
-    fp = _Py_fopen(filename, "r");
-    PyRun_SimpleFile(fp, filename);
-
-    Py_Finalize();
+    MyThread *thread = new MyThread;
+    thread->start();
+//    thread->wait();
 }
 
 void Database::selectAllChapter()
@@ -136,4 +130,17 @@ QByteArray Database::getListNewChapter()
 QByteArray Database::getListOldChapter()
 {
     return m_listOldChapter;
+}
+
+void MyThread::run()
+{
+    char filename[] = "/home/alexandre/Documents/GitHub/MangaX/MangaX/src/python/scraping.py";
+    FILE *fp;
+
+    Py_Initialize();
+
+    fp = _Py_fopen(filename, "r");
+    PyRun_SimpleFile(fp, filename);
+
+    Py_Finalize();
 }

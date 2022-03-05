@@ -23,8 +23,8 @@ Item {
                                          "currentChapter": dataJson[i]["currentChapter"],
                                          "newChapter": dataJson[i]["newChapter"]})
                 }
-
             }
+            load.running = false
         }
     }
 

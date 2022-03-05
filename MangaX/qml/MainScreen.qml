@@ -11,6 +11,7 @@ Page {
     }
 
     BusyIndicator {
+        id: load
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
         running: true

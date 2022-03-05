@@ -89,4 +89,4 @@ def verifyNewChapter():
         else: # o dominio do site de manga
             pass;
 
-verifyNewChapter();
+#verifyNewChapter();

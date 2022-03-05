@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QSqlDatabase>
+#include <QThread>
 
 
 class Database : public QObject
@@ -33,6 +34,11 @@ private:
 
 signals:
 
+};
+
+class MyThread : public QThread {
+private:
+    void run() override;
 };
 
 #endif // DATABASE_H
