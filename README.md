@@ -1,7 +1,4 @@
 # MangaX
- Um aplicativo que notificará o lançamento de novo capitulo de mangá favorito. 
+ Um aplicativo que mostrará uma lista de lançamento de novo(s) capítulo(s) de mangas.
 
-# Requerimento de biblioteca de python:
-- Sqlite3
-- BeautifulSoup
-- cfscrape
+O projeto ainda está no começo.
