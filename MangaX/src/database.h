@@ -14,6 +14,7 @@ public:
     void openDatabase();
     void createTable();
 
+    Q_INVOKABLE auto selectAllChapter();
     Q_INVOKABLE void addManga(QString &name, QString &url, QString &chapter);
     Q_INVOKABLE void removeManga(QString &name);
     Q_INVOKABLE void editManga(QString &nameOld, QString &name, QString &url, QString &chapter);
@@ -21,6 +22,8 @@ public:
 
 private:
     QSqlDatabase m_db;
+    // Uma variavel novo
+    // uma variavel velho
 
 signals:
 

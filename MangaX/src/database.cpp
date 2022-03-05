@@ -22,13 +22,18 @@ void Database::openDatabase() {
 void Database::createTable()
 {
     QSqlQuery query;
-    query.exec("CREATE TABLE IF NOT EXISTS manga(name VARCHAR(255) NOT NULL UNIQUE, url VARCHAR(255) NOT NULL, chapter INT not null)");
+    query.exec("CREATE TABLE IF NOT EXISTS manga("
+               "name VARCHAR(255) NOT NULL UNIQUE,"
+               " url VARCHAR(255) NOT NULL,"
+               " current_chapter INT NOT NULL,"
+               " new_chapter INT NOT NULL,"
+               " available CHAR(3))");
 }
 
 void Database::addManga(QString &name, QString &url, QString &chapter)
 {
     QSqlQuery query;
-    query.prepare("INSERT INTO manga VALUES (:name, :url, :chapter)");
+    query.prepare("INSERT INTO manga VALUES (:name, :url, :chapter, 'no')");
     query.bindValue(":name", name);
     query.bindValue(":url", url);
     query.bindValue(":chapter", chapter);

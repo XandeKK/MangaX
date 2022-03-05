@@ -26,3 +26,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     src/database.h
+
+DISTFILES += \
+    src/python/database.py \
+    src/python/scraping.py
