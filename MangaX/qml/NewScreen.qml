@@ -18,7 +18,7 @@ Item {
             if(dataJson.length > 0){
                 running = false
                 for(let i=0; i<dataJson.length; i++){
-                    listModel.append({"name": dataJson[i]["name"],
+                    listModelNew.append({"name": dataJson[i]["name"],
                                          "url": dataJson[i]["url"],
                                          "currentChapter": dataJson[i]["currentChapter"],
                                          "newChapter": dataJson[i]["newChapter"]})
@@ -116,6 +116,13 @@ Item {
                 MouseArea {
                     id: mouseArea
                     anchors.fill: parent
+                    onClicked: {
+                        varListModelOld.append({"name": name,
+                                                   "url": url,
+                                                   "currentChapter": currentChapter,
+                                                   "newChapter": newChapter})
+                        listModelNew.remove(index)
+                    }
                 }
 
                 Image {
@@ -133,11 +140,21 @@ Item {
                         id: menu
                         MenuItem {
                             text: "edit"
-                            onTriggered: console.log("edit")
+                            onTriggered: {
+                                arrayManga = {
+                                    "name": name,
+                                    "url": url,
+                                    "cap": currentChapter
+                                }
+//                                stack.push("")
+                            }
                         }
                         MenuItem {
                             text: "delete"
-                            onTriggered: console.log("delete")
+                            onTriggered: {
+                                _database.removeManga(name)
+                                listModelNew.remove(index)
+                            }
                         }
                     }
 
@@ -158,20 +175,7 @@ Item {
         delegate: myDelegate
 
         model: ListModel{
-            id: listModel
-//            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
-//            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
-//            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
-//            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
-//            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
-//            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
-//            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
-//            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
-//            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
-//            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
-//            ListElement {name: "One piece"; site: "mangalivre"; cap: "1000"}
-//            ListElement {name: "Naruto"; site: "UnionManga"; cap: "700"}
-
+            id: listModelNew
         }
     }
 }

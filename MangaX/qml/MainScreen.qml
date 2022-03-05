@@ -4,6 +4,7 @@ import QtQuick.Layouts 1.15
 import QtQuick.Controls.Material 2.15
 
 Page {
+    property var varListModelOld
     Action {
         shortcut: "Ctrl+1"
         onTriggered: tabBar.currentIndex = 0
