@@ -128,7 +128,7 @@ Item {
                     anchors.fill: parent
                     onClicked: {
                         _database.openManga(url)
-//                        _database.readedManga(name, newChapter)
+                        _database.readedManga(name, newChapter)
                         varListModelOld.append({"name": name,
                                                    "url": url,
                                                    "currentChapter": newChapter})
