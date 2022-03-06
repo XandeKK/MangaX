@@ -6,8 +6,21 @@ import QtQuick.Controls.Material 2.15
 Page {
     property var varListModelOld
     Component.onCompleted: {
-//        _database.updateManga()
-        _database.selectAllChapter()
+        _worker.openPython()
+    }
+
+    Timer {
+        id: timer
+        running: true
+        repeat: true
+        interval: 100
+        onTriggered: {
+            if(_worker.getFinishedWebScraping()){
+                running = false
+                load.running = false
+                _database.selectAllChapter()
+            }
+        }
     }
 
     BusyIndicator {

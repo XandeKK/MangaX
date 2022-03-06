@@ -165,7 +165,7 @@ Item {
 
             TextInput {
                 id: inputChapter
-                text: qsTr(arrayManga["cap"])
+                text: qsTr(arrayManga["chapter"])
                 anchors.fill: parent
                 font.pointSize: 9 * dip
                 horizontalAlignment: Text.AlignLeft
@@ -208,8 +208,12 @@ Item {
             anchors.fill: parent
             onClicked:{
                 if(inputManga.text != "" && inputUrl.text != "" && inputChapter.text != ""){
-//                    _database.addManga(inputManga.text, inputUrl.text, inputChapter.text)
-//                    stack.pop() // Colocar um aviso que a operação deu certo.
+                    _database.editManga(arrayManga["name"], inputManga.text, inputUrl.text, inputChapter.text)
+                    varListModelOld.append({"name": inputManga.text,
+                                               "url": inputUrl.text,
+                                               "currentChapter": inputChapter.text})
+                    stack.pop() // Colocar um aviso que a operação deu certo.
+
                 }
             }
 

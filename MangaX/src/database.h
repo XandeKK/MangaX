@@ -3,8 +3,6 @@
 
 #include <QObject>
 #include <QSqlDatabase>
-#include <QThread>
-
 
 class Database : public QObject
 {
@@ -14,8 +12,6 @@ public:
 
     void openDatabase();
     void createTable();
-
-    Q_INVOKABLE void updateManga();
 
     Q_INVOKABLE void selectAllChapter();
     Q_INVOKABLE void addManga(QString &name, QString &url, QString &chapter);
@@ -35,10 +31,4 @@ private:
 signals:
 
 };
-
-class MyThread : public QThread {
-private:
-    void run() override;
-};
-
 #endif // DATABASE_H

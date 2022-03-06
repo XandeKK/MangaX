@@ -11,20 +11,23 @@ Item {
         running: true
         repeat: true
         onTriggered: {
-            let dataJson = _database.getListNewChapter()
+            if(!load.running){
 
-            dataJson = JSON.parse(dataJson)
+                let dataJson = _database.getListNewChapter()
 
-            if(dataJson.length > 0){
-                running = false
-                for(let i=0; i<dataJson.length; i++){
-                    listModelNew.append({"name": dataJson[i]["name"],
-                                         "url": dataJson[i]["url"],
-                                         "currentChapter": dataJson[i]["currentChapter"],
-                                         "newChapter": dataJson[i]["newChapter"]})
+                dataJson = JSON.parse(dataJson)
+
+                if(dataJson.length > 0){
+                    running = false
+                    for(let i=0; i<dataJson.length; i++){
+                        listModelNew.append({"name": dataJson[i]["name"],
+                                                "url": dataJson[i]["url"],
+                                                "currentChapter": dataJson[i]["currentChapter"],
+                                                "newChapter": dataJson[i]["newChapter"]})
+                    }
                 }
             }
-            load.running = false
+//            load.running = false
         }
     }
 
@@ -91,7 +94,7 @@ Item {
                     anchors.left: parent.left
                     anchors.leftMargin: parent.width * 2.5 / 100
                     height: 20
-                    width: parent.width * 60 / 100
+                    width: parent.width * 50 / 100
                     font.pointSize: 9 * dip
                     text: "Site: " + urlFunc()
                     color: "white"
@@ -106,15 +109,15 @@ Item {
                     }
                 }
                 Text {
-                    id: textCap
+                    id: textChapter
                     anchors.top: textManga.bottom
                     anchors.topMargin: parent.height * 2.5 / 100
                     anchors.left: textSite.right
                     anchors.leftMargin: parent.width * 2.5 / 100
                     height: 20
-                    width: parent.width * 20 / 100
+                    width: parent.width * 40 / 100
                     font.pointSize: 9 * dip
-                    text: "Cap.: " + currentChapter
+                    text: "Current: " + currentChapter + " - New: " + newChapter
                     color: "white"
                     wrapMode: Text.WordWrap
                     clip: true
@@ -149,10 +152,11 @@ Item {
                         MenuItem {
                             text: "edit"
                             onTriggered: {
+                                listModelNew.remove(index)
                                 arrayManga = {
                                     "name": name,
                                     "url": url,
-                                    "cap": currentChapter
+                                    "chapter": currentChapter
                                 }
                                 stack.push("qrc:/qml/EditManga.qml")
                             }

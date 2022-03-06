@@ -4,7 +4,8 @@ QT += core
 
 SOURCES += \
         main.cpp \
-        src/database.cpp
+        src/database.cpp \
+        src/worker.cpp
 
 #resources.files = qml/main.qml
 #resources.prefix = /$${TARGET}
@@ -26,7 +27,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
-    src/database.h
+    src/database.h \
+    src/worker.h
 
 DISTFILES += \
     src/python/scraping.py

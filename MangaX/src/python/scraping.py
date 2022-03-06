@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup;
 import cfscrape;
 import subprocess
+import requests
+from lxml.html import fromstring
 
 # Database
 def openDatabase():
@@ -39,6 +41,22 @@ def updateAvailableBanco(name: str, new_chapter: str):
 
 # WebScraping
 
+def to_get_proxies():
+    url = 'https://free-proxy-list.net/'
+
+    response = requests.get(url)
+
+    parser = fromstring(response.content)
+
+    for item in parser.xpath('//tbody/tr')[:10]:
+
+        if item.xpath('.//td[7][contains(text(),"yes")]'):
+
+            proxy = ":".join([item.xpath('.//td[1]/text()')[0],
+                              item.xpath('.//td[2]/text()')[0]])
+
+            return proxy
+
 def scrapWeb(url: str):
     scraper = cfscrape.create_scraper();
     html = scraper.get(url).content;
@@ -49,8 +67,7 @@ def scrapWeb(url: str):
 
 def scrapWebMangaLivre(url: str):
     try:
-        scraper = cfscrape.create_scraper();
-        html = scraper.get(url).content;
+        html = subprocess.check_output(f"wget {url} -O - -q  -e use_proxy=on -e http_proxy={to_get_proxies()}", shell=True)
 
         soup = BeautifulSoup(html, 'html.parser');
 
@@ -60,24 +77,11 @@ def scrapWebMangaLivre(url: str):
 
         return chapter;
     except:
-        try:
-            html = subprocess.check_output(f"wget {url} -O - -q", shell=True)
-
-            soup = BeautifulSoup(html, 'html.parser');
-
-            div = soup.find("div", class_="container-box default color-brown");
-
-            chapter = div.find("span").string;
-
-            return chapter;
-        except:
-            return 0;
+        return 0;
 
 
 def verifyNewChapter():
-    percent = 100 / len(selectDatabase());
     for enum, manga in enumerate(selectDatabase()):
-        print(f"loading {percent*(enum+1)}%")
         name: str = manga[0];
         url: str = manga[1];
         current_chapter: int = int(manga[2]);
@@ -89,4 +93,4 @@ def verifyNewChapter():
         else: # o dominio do site de manga
             pass;
 
-#verifyNewChapter();
+verifyNewChapter();

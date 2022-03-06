@@ -11,19 +11,20 @@ Item {
         running: true
         repeat: true
         onTriggered: {
-            let dataJson = _database.getListOldChapter()
+            if(!load.running){
+                let dataJson = _database.getListOldChapter()
 
-            dataJson = JSON.parse(dataJson)
+                dataJson = JSON.parse(dataJson)
 
-            if(dataJson.length > 0){
-                running = false
-                for(let i=0; i<dataJson.length; i++){
-                    listModelOld.append({"name": dataJson[i]["name"],
-                                         "url": dataJson[i]["url"],
-                                         "currentChapter": dataJson[i]["currentChapter"],
-                                         "newChapter": dataJson[i]["newChapter"]})
+                if(dataJson.length > 0){
+                    running = false
+                    for(let i=0; i<dataJson.length; i++){
+                        listModelOld.append({"name": dataJson[i]["name"],
+                                                "url": dataJson[i]["url"],
+                                                "currentChapter": dataJson[i]["currentChapter"],
+                                                "newChapter": dataJson[i]["newChapter"]})
+                    }
                 }
-
             }
         }
     }
@@ -93,13 +94,20 @@ Item {
                     height: 20
                     width: parent.width * 60 / 100
                     font.pointSize: 9 * dip
-                    text: "Site: " + url
+                    text: "Site: " + urlFunc()
                     color: "white"
                     wrapMode: Text.WordWrap
                     clip: true
+
+                    function urlFunc(){
+                        let leturl = url.toString()
+                        leturl = leturl.replace("https://", "")
+                        leturl = leturl.split(".")[0]
+                        return leturl
+                    }
                 }
                 Text {
-                    id: textCap
+                    id: textChapter
                     anchors.top: textManga.bottom
                     anchors.topMargin: parent.height * 2.5 / 100
                     anchors.left: textSite.right
@@ -107,7 +115,7 @@ Item {
                     height: 20
                     width: parent.width * 20 / 100
                     font.pointSize: 9 * dip
-                    text: "Cap.: " + currentChapter
+                    text: "Current: " + currentChapter
                     color: "white"
                     wrapMode: Text.WordWrap
                     clip: true
@@ -137,10 +145,11 @@ Item {
                         MenuItem {
                             text: "edit"
                             onTriggered: {
+                                listModelOld.remove(index)
                                 arrayManga = {
                                     "name": name,
                                     "url": url,
-                                    "cap": currentChapter
+                                    "chapter": currentChapter
                                 }
                                 stack.push("qrc:/qml/EditManga.qml")
                             }
