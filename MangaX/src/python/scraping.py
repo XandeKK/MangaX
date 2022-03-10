@@ -81,10 +81,15 @@ def scrapWebMangaLivre(url: str):
 
 
 def verifyNewChapter():
-    for enum, manga in enumerate(selectDatabase()):
+    listDatabase = selectDatabase();
+    percent = 100 / len(listDatabase);
+    for enum, manga in enumerate(listDatabase):
         name: str = manga[0];
         url: str = manga[1];
         current_chapter: int = int(manga[2]);
+
+        print(f"manga: {name}.\n")
+        print(f"percent: {percent*(enum+1)}%");
 
         if(url.find("mangalivre") != -1):
             new_chapter: int = int(scrapWebMangaLivre(url));
