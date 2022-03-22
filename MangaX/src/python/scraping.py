@@ -8,7 +8,7 @@ from lxml.html import fromstring
 def openDatabase():
     import sqlite3;
 
-    connection = sqlite3.connect('./database.db');
+    connection = sqlite3.connect('/home/alexandre/Documents/GitHub/MangaX/build-MangaX-Desktop_Qt_6_2_3_GCC_64bit-Debug/database.db');
 
     return connection;
 

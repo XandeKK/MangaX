@@ -16,6 +16,7 @@ Page {
         interval: 100
         onTriggered: {
             if(_worker.getFinishedWebScraping()){
+                console.log("Opa Terminou")
                 running = false
                 load.running = false
                 _database.selectAllChapter()
