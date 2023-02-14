@@ -5,6 +5,3 @@ O projeto está finalizado.
 Como o projeto é de uso pessoal, eu só vou colocar um site.
 
 Caso queira adicionar mais site, modifique o arquivo scraping.py localizado no MangaX/src/python
-
-Lista de site disponível:
-- mangalivre
