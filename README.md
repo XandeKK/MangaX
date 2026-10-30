@@ -35,7 +35,7 @@ Start the app in development mode:
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The server creates `data/frank_manga.sqlite` automatically the first time it starts and seeds a sample library when the database is empty.
+Open [http://localhost:3000](http://localhost:3000). The server creates `data/manga_x.sqlite` automatically the first time it starts and seeds a sample library when the database is empty.
 
 No Gemini API key is required. Online sources such as MangaDex require an internet connection. The generic HTML source may not work with sites that require JavaScript execution or block automated requests.
 
