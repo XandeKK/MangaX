@@ -83,7 +83,7 @@ Sources implement the `MangaSource` interface in `src/server/sources/types.ts`. 
 
 ## Data and Privacy
 
-The library, reader preferences, and monitoring history are stored in the local SQLite file at `data/frank_manga.sqlite`. The app requests manga metadata, chapters, and page images from the configured source websites when needed.
+The library, reader preferences, and monitoring history are stored in the local SQLite file at `data/manga_x.sqlite`. The app requests manga metadata, chapters, and page images from the configured source websites when needed.
 
 ## Additional Documentation
 
