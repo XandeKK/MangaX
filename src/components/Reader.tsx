@@ -124,6 +124,14 @@ export const Reader: React.FC<ReaderProps> = ({
     });
   }, [readingMode, saveProgress]);
 
+  const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
+    const element = event.currentTarget;
+    const reachedEnd = element.scrollTop + element.clientHeight >= element.scrollHeight - 32;
+    if (reachedEnd && pages.length > 0 && !isMarkedAsRead) {
+      saveProgress(pages.length);
+    }
+  }, [pages.length, isMarkedAsRead, saveProgress]);
+
   const toggleReadingMode = useCallback(() => {
     if (manga && ['manhwa', 'manhua', 'webtoon'].includes(manga.type)) return;
     setReadingMode(prev => {
@@ -466,6 +474,7 @@ export const Reader: React.FC<ReaderProps> = ({
               scrollSnap ? 'snap-y-mandatory' : ''
             }`}
             onClick={(e) => e.stopPropagation()}
+            onScroll={handleScroll}
           >
             <div className="max-w-3xl w-full flex flex-col items-center space-y-0.5">
               {pages.map((p, idx) => (
