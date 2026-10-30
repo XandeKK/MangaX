@@ -1,0 +1,6 @@
+{
+  "name": "MangaX — Manga Tracker & Reader",
+  "description": "Gerenciador, monitor de lançamentos e leitor integrado de mangás, manhwas e webtoons com proteção contra anúncios e atalhos de leitura.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
