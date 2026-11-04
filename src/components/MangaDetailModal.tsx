@@ -3,7 +3,7 @@ import {
   X, BookOpen, Check, CheckCheck, RefreshCw, Trash2, Edit3, Plus, 
   ExternalLink, Sliders, Shield, AlertTriangle, Layers, Eye, EyeOff, Loader2 
 } from 'lucide-react';
-import { api } from '../services/api';
+import { api, proxiedImageUrl } from '../services/api';
 import { Manga, Source, Chapter, ReaderPreferences, ReadingMode, ReadingDirection, NightFilter } from '../types';
 
 interface MangaDetailModalProps {
@@ -23,8 +23,6 @@ export const MangaDetailModal: React.FC<MangaDetailModalProps> = ({
   onMangaUpdated,
   onMangaDeleted
 }) => {
-  if (!isOpen) return null;
-
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [data, setData] = useState<{
@@ -46,6 +44,8 @@ export const MangaDetailModal: React.FC<MangaDetailModalProps> = ({
   const [editStatus, setEditStatus] = useState('ongoing');
   const [editAuthor, setEditAuthor] = useState('');
   const [editArtist, setEditArtist] = useState('');
+  const [editGenres, setEditGenres] = useState('');
+  const [editAltTitles, setEditAltTitles] = useState('');
   const [editError, setEditError] = useState<string | null>(null);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
@@ -71,6 +71,8 @@ export const MangaDetailModal: React.FC<MangaDetailModalProps> = ({
       setEditStatus(res.manga.status || 'ongoing');
       setEditAuthor(res.manga.author || '');
       setEditArtist(res.manga.artist || '');
+      setEditGenres((res.manga.genres || []).join(', '));
+      setEditAltTitles((res.manga.alt_titles || []).join(', '));
       setEditError(null);
 
       const isScroll = ['manhwa', 'manhua', 'webtoon'].includes(res.manga.type);
@@ -86,8 +88,11 @@ export const MangaDetailModal: React.FC<MangaDetailModalProps> = ({
   };
 
   useEffect(() => {
+    if (!isOpen) return;
     loadDetails();
-  }, [mangaId]);
+  }, [mangaId, isOpen]);
+
+  if (!isOpen) return null;
 
   const handleRefreshChapters = async () => {
     setRefreshing(true);
@@ -127,7 +132,16 @@ export const MangaDetailModal: React.FC<MangaDetailModalProps> = ({
         return {
           ...prev,
           manga: { ...prev.manga, unread_count: res.unreadCount },
-          chapters: prev.chapters.map(c => c.chapter_number <= chapter.chapter_number ? { ...c, is_read: 1 } : c)
+          chapters: (() => {
+            const ordered = [...prev.chapters].sort((a, b) => {
+              if (a.chapter_number === null) return b.chapter_number === null ? a.url.localeCompare(b.url) : 1;
+              if (b.chapter_number === null) return -1;
+              return a.chapter_number - b.chapter_number || a.url.localeCompare(b.url);
+            });
+            const boundary = ordered.findIndex(item => item.id === chapter.id);
+            const ids = new Set(ordered.slice(0, boundary + 1).map(item => item.id));
+            return prev.chapters.map(item => ids.has(item.id) ? { ...item, is_read: 1 } : item);
+          })()
         };
       });
       onMangaUpdated();
@@ -163,7 +177,9 @@ export const MangaDetailModal: React.FC<MangaDetailModalProps> = ({
         type: editType as any,
         status: editStatus as any,
         author: editAuthor.trim(),
-        artist: editArtist.trim()
+        artist: editArtist.trim(),
+        genres: editGenres.split(',').map(value => value.trim()).filter(Boolean),
+        alt_titles: editAltTitles.split(',').map(value => value.trim()).filter(Boolean)
       });
       await loadDetails();
       onMangaUpdated();
@@ -266,7 +282,7 @@ export const MangaDetailModal: React.FC<MangaDetailModalProps> = ({
             {/* Cover Image (3:4 ratio) */}
             <div className="w-36 sm:w-44 aspect-[3/4] rounded-xl bg-neutral-950 overflow-hidden border border-neutral-800 shadow-xl shrink-0">
               <img
-                src={manga.cover_url}
+                src={proxiedImageUrl(manga.cover_url)}
                 alt={manga.title}
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover object-top"
@@ -293,6 +309,11 @@ export const MangaDetailModal: React.FC<MangaDetailModalProps> = ({
                   <span aria-hidden="true">·</span>
                   <span className="capitalize">{manga.status === 'completed' ? 'Concluído' : 'Em lançamento'}</span>
                 </div>
+                {!!manga.genres?.length && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {manga.genres.map(genre => <span key={genre} className="px-2 py-0.5 rounded-full bg-neutral-800 text-[10px] text-neutral-300">{genre}</span>)}
+                  </div>
+                )}
 
                 <p className="mt-3 text-xs sm:text-sm text-neutral-400 line-clamp-3 leading-relaxed">
                   {manga.description || 'Nenhuma sinopse cadastrada para esta obra.'}
@@ -631,6 +652,17 @@ export const MangaDetailModal: React.FC<MangaDetailModalProps> = ({
                     placeholder="Nome do ilustrador"
                     className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-xs text-white placeholder-neutral-500"
                   />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-neutral-300 mb-1">Gêneros</label>
+                  <input type="text" value={editGenres} onChange={e => setEditGenres(e.target.value)} placeholder="Ação, aventura, fantasia" className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-xs text-white placeholder-neutral-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-neutral-300 mb-1">Títulos alternativos</label>
+                  <input type="text" value={editAltTitles} onChange={e => setEditAltTitles(e.target.value)} placeholder="Separe por vírgulas" className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-xs text-white placeholder-neutral-500" />
                 </div>
               </div>
 

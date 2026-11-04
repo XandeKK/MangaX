@@ -3,7 +3,6 @@ export type MangaStatus = 'ongoing' | 'completed' | 'hiatus';
 export type ReadingMode = 'single' | 'double' | 'book' | 'webtoon';
 export type ReadingDirection = 'rtl' | 'ltr' | 'vertical';
 export type NightFilter = 'none' | 'night' | 'sepia';
-
 export interface Manga {
   id: string;
   title: string;
@@ -14,6 +13,8 @@ export interface Manga {
   main_url: string;
   author?: string;
   artist?: string;
+  genres?: string[];
+  alt_titles?: string[];
   last_read_chapter_id?: string | null;
   last_read_chapter_number?: number | null;
   last_known_chapter_number?: number | null;
@@ -41,7 +42,7 @@ export interface Chapter {
   manga_id: string;
   source_id: string;
   title: string;
-  chapter_number: number;
+  chapter_number: number | null;
   chapter_number_text: string;
   volume?: string;
   url: string;

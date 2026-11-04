@@ -14,12 +14,12 @@ import {
   Zap,
   Sparkles
 } from 'lucide-react';
-import { api } from '../services/api';
+import { api, proxiedImageUrl } from '../services/api';
 import { Manga } from '../types';
 
-export const DiagnosticView: React.FC = () => {
+export const DiagnosticView: React.FC<{ onOpenSources?: () => void }> = ({ onOpenSources }) => {
   const [data, setData] = useState<{
-    health: { id: string; name: string; status: 'ok' | 'degraded' | 'offline'; latencyMs: number }[];
+    health: { id: string; name: string; status: 'ok' | 'degraded' | 'offline' | 'registered'; latencyMs: number; error?: string }[];
     security: { totalBlocked: number; recentLogs: { timestamp: number; url: string; reason: string }[] };
   } | null>(null);
 
@@ -135,21 +135,17 @@ export const DiagnosticView: React.FC = () => {
         <div>
           <h1 className="text-xl font-bold text-white tracking-tight">Diagnóstico de Fontes &amp; Integridade do Leitor</h1>
           <p className="text-xs text-neutral-400 mt-1">
-            Status dos extratores, telemetria de latência, verificação heurística do leitor e proteção anti-anúncios
+            Adapter health, reader checks, request latency, and image proxy protection
           </p>
         </div>
 
-        <button
-          onClick={loadData}
-          disabled={loading}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-neutral-800 hover:bg-neutral-700 rounded-lg border border-neutral-700 transition-colors shrink-0"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-          <span>Atualizar Diagnóstico</span>
-        </button>
+        <div className="flex gap-2">
+          {onOpenSources && <button onClick={onOpenSources} className="px-3 py-1.5 text-xs font-semibold text-neutral-100 bg-amber-400/10 hover:bg-amber-400/20 rounded-lg border border-amber-400/20">Supported sources</button>}
+          <button onClick={loadData} disabled={loading} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-neutral-800 hover:bg-neutral-700 rounded-lg border border-neutral-700 transition-colors shrink-0"><RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /><span>Atualizar Diagnóstico</span></button>
+        </div>
       </div>
 
-      {/* Reader Health & Heuristic Verifier */}
+      {/* Reader Health Verifier */}
       <div className="p-6 rounded-2xl bg-neutral-900/80 border border-neutral-800 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
@@ -158,13 +154,13 @@ export const DiagnosticView: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-bold text-white">Verificador de Integridade do Reader &amp; Heurísticas</h2>
+                <h2 className="text-sm font-bold text-white">Reader Integrity Check</h2>
                 <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-amber-400/10 text-amber-400 border border-amber-400/20">
                   MangaX Engine
                 </span>
               </div>
               <p className="text-xs text-neutral-400 mt-0.5">
-                Testa a capacidade do leitor em extrair páginas de capítulos, valida o proxy de imagens e ativa heurísticas inteligentes quando necessário.
+                Checks the registered adapter for a chapter URL and verifies the image proxy.
               </p>
             </div>
           </div>
@@ -332,7 +328,7 @@ export const DiagnosticView: React.FC = () => {
             {probeResult.firstPagePreviewUrl && (
               <div className="p-3 bg-neutral-900 rounded-lg border border-neutral-800 flex items-center gap-4">
                 <img
-                  src={probeResult.firstPagePreviewUrl}
+                  src={proxiedImageUrl(probeResult.firstPagePreviewUrl)}
                   alt="Prévia da página 1"
                   className="w-14 h-20 object-cover rounded bg-neutral-950 border border-neutral-800 shadow"
                 />
@@ -362,7 +358,7 @@ export const DiagnosticView: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold text-white">{h.name}</h3>
                   <span className={`text-[11px] font-semibold px-2 py-0.5 rounded ${
-                    h.status === 'ok' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
+                    h.status === 'ok' ? 'bg-emerald-500/10 text-emerald-400' : h.status === 'registered' ? 'bg-sky-500/10 text-sky-300' : 'bg-rose-500/10 text-rose-400'
                   }`}>
                     {h.status.toUpperCase()}
                   </span>
@@ -416,21 +412,21 @@ export const DiagnosticView: React.FC = () => {
         </div>
       </div>
 
-      {/* Live Extractor Tester Console */}
+      {/* Live source adapter check */}
       <div className="p-6 rounded-2xl bg-neutral-900/60 border border-neutral-800 space-y-4">
         <div className="flex items-center gap-2">
           <Terminal className="w-4 h-4 text-amber-400" />
-          <h2 className="text-sm font-bold text-white">Console de Teste de Extração de URLs</h2>
+          <h2 className="text-sm font-bold text-white">Source Adapter Check</h2>
         </div>
         <p className="text-xs text-neutral-400">
-          Valide a extração de metadados e capítulos de qualquer URL antes de cadastrar uma nova obra.
+          Check metadata, chapters, and a sample reader page for a supported website.
         </p>
 
         <form onSubmit={handleTestUrl} className="flex gap-2">
           <input
             type="text"
             required
-            placeholder="Cole uma URL ou MangaDex UUID (ex: 32d76d19-8a05-4db0-9fc2-e0b0648fe9d0)"
+            placeholder="Paste a supported manga URL or MangaDex UUID"
             value={testUrl}
             onChange={(e) => setTestUrl(e.target.value)}
             className="flex-1 bg-neutral-950 border border-neutral-800 rounded-lg px-3.5 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400"
@@ -456,7 +452,7 @@ export const DiagnosticView: React.FC = () => {
           <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 text-xs space-y-2">
             <div className="flex items-center gap-2 text-emerald-400 font-semibold">
               <Check className="w-4 h-4" />
-              <span>Extração bem-sucedida via motor: {testResult.sourceName}</span>
+              <span>Adapter check completed: {testResult.sourceName}</span>
             </div>
             <pre className="p-3 bg-neutral-900 rounded-lg text-neutral-300 overflow-x-auto text-[11px] font-mono">
               {JSON.stringify(testResult.metadata, null, 2)}

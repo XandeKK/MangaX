@@ -24,7 +24,10 @@ async function runTestSuite() {
     assert(db !== null, 'Critério 1: Banco de dados SQLite inicializado com sucesso.');
 
     const migrations = dbAll('SELECT * FROM schema_migrations');
-    assert(migrations.length > 0, 'Critério 1.1: Migrações aplicadas no banco de dados.');
+    assert(migrations.length >= 6 && migrations.some((migration: any) => migration.version === 6), 'Criterion 1.1: all historical and adapter retirement migrations applied.');
+    assert(dbAll("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'source_parsers'").length === 0, 'Criterion 1.2: retired parser storage is absent after migration.');
+    const chapterNumberColumn = dbAll<any>('PRAGMA table_info(chapters)').find(column => column.name === 'chapter_number');
+    assert(chapterNumberColumn && chapterNumberColumn.notnull === 0, 'Criterion 1.3: the database accepts special chapters without numeric values.');
 
     // Test 2: Manga registration and persistence
     const testMangaId = `test-manga-${Date.now()}`;
@@ -59,6 +62,11 @@ async function runTestSuite() {
     // Test 5: Chapter identification and duplicate avoidance
     const chapters = await sampleSource.extractChapters('https://frank.local/frieren');
     assert(chapters && chapters.length >= 3, 'Critério 5: Extração e normalização de capítulos.');
+    const readerPages = await sampleSource.extractPages(chapters[0].url);
+    assert(readerPages.pages.length > 1 && readerPages.pages[0].index === 1, 'Criterion 5.1: adapter reader pages are returned in order.');
+    let unsupportedError = '';
+    try { getSourceForUrl('https://unsupported.example/title/one'); } catch (error: any) { unsupportedError = error.message; }
+    assert(unsupportedError.includes('No TypeScript source adapter supports'), 'Criterion 5.2: unsupported websites fail with a clear message.');
 
     const sourceId = `src-${testMangaId}`;
     dbRun(
@@ -118,4 +126,4 @@ async function runTestSuite() {
   if (failed > 0) process.exit(1);
 }
 
-runTestSuite();
+await runTestSuite();

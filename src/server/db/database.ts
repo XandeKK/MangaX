@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 let db: SqlJsDatabase | null = null;
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_DIR = path.resolve(process.env.MANGAX_DATA_DIR || path.resolve(process.cwd(), 'data'));
 const DB_PATH = path.join(DATA_DIR, 'manga_x.sqlite');
 
 export async function getDatabase(): Promise<SqlJsDatabase> {
@@ -48,7 +48,7 @@ export function saveDatabase(): void {
   }
 }
 
-function applyMigrations(database: SqlJsDatabase): void {
+export function applyMigrations(database: SqlJsDatabase): void {
   database.run(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
       version INTEGER PRIMARY KEY,
@@ -169,6 +169,89 @@ function applyMigrations(database: SqlJsDatabase): void {
       CREATE INDEX IF NOT EXISTS idx_check_logs_time ON check_logs(timestamp);
 
       INSERT INTO schema_migrations (version, applied_at) VALUES (1, ${Date.now()});
+    `);
+  }
+
+  if (currentVersion < 2) {
+    database.run(`
+      CREATE TABLE IF NOT EXISTS source_parsers (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        version INTEGER NOT NULL,
+        base_url TEXT NOT NULL,
+        domains_json TEXT NOT NULL,
+        config_json TEXT NOT NULL,
+        enabled INTEGER NOT NULL DEFAULT 1,
+        validation_status TEXT NOT NULL DEFAULT 'valid',
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_source_parsers_enabled ON source_parsers(enabled);
+      INSERT INTO schema_migrations (version, applied_at) VALUES (2, ${Date.now()});
+    `);
+  }
+
+  if (currentVersion < 3) {
+    database.run(`
+      ALTER TABLE mangas ADD COLUMN genres_json TEXT NOT NULL DEFAULT '[]';
+      ALTER TABLE mangas ADD COLUMN alt_titles_json TEXT NOT NULL DEFAULT '[]';
+      INSERT INTO schema_migrations (version, applied_at) VALUES (3, ${Date.now()});
+    `);
+  }
+
+  if (currentVersion < 4) {
+    database.run(`
+      ALTER TABLE source_parsers ADD COLUMN last_test_at INTEGER;
+      ALTER TABLE source_parsers ADD COLUMN last_test_status TEXT;
+      ALTER TABLE source_parsers ADD COLUMN last_successful_test_at INTEGER;
+      INSERT INTO schema_migrations (version, applied_at) VALUES (4, ${Date.now()});
+    `);
+  }
+
+  if (currentVersion < 5) {
+    database.run(`
+      PRAGMA foreign_keys = OFF;
+      CREATE TABLE chapters_v5 (
+        id TEXT PRIMARY KEY,
+        manga_id TEXT NOT NULL,
+        source_id TEXT NOT NULL,
+        title TEXT,
+        chapter_number REAL,
+        chapter_number_text TEXT NOT NULL,
+        volume TEXT,
+        url TEXT NOT NULL,
+        release_date TEXT,
+        detected_at INTEGER NOT NULL,
+        is_read INTEGER DEFAULT 0,
+        read_at INTEGER,
+        last_page_read INTEGER DEFAULT 1,
+        total_pages INTEGER DEFAULT 0,
+        FOREIGN KEY (manga_id) REFERENCES mangas(id) ON DELETE CASCADE,
+        FOREIGN KEY (source_id) REFERENCES sources(id) ON DELETE CASCADE
+      );
+      INSERT INTO chapters_v5 (id, manga_id, source_id, title, chapter_number, chapter_number_text, volume, url, release_date, detected_at, is_read, read_at, last_page_read, total_pages)
+        SELECT id, manga_id, source_id, title, chapter_number, chapter_number_text, volume, url, release_date, detected_at, is_read, read_at, last_page_read, total_pages FROM chapters;
+      DROP TABLE chapters;
+      ALTER TABLE chapters_v5 RENAME TO chapters;
+      CREATE INDEX IF NOT EXISTS idx_chapters_manga_num ON chapters(manga_id, chapter_number);
+      CREATE INDEX IF NOT EXISTS idx_chapters_unread ON chapters(manga_id, is_read);
+      PRAGMA foreign_keys = ON;
+      INSERT INTO schema_migrations (version, applied_at) VALUES (5, ${Date.now()});
+    `);
+  }
+
+  if (currentVersion < 6) {
+    database.run(`
+      -- Retire source parser configuration without touching tracked titles,
+      -- chapter rows, reader preferences, or progress.
+      UPDATE sources
+        SET source_type = 'unsupported',
+            last_status = 'error',
+            error_message = 'No registered TypeScript adapter supports this source URL.'
+        WHERE source_type LIKE 'parser:%' OR source_type = 'generic-auto';
+      DROP INDEX IF EXISTS idx_source_parsers_enabled;
+      DROP TABLE IF EXISTS source_parsers;
+      INSERT INTO schema_migrations (version, applied_at) VALUES (6, ${Date.now()});
     `);
   }
 }

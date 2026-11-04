@@ -26,8 +26,8 @@ export const Reader: React.FC<ReaderProps> = ({
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [manga, setManga] = useState<Manga | null>(null);
   const [pages, setPages] = useState<{ index: number; url: string }[]>([]);
-  const [nextChapter, setNextChapter] = useState<{ id: string; chapter_number: number; chapter_number_text: string } | null>(null);
-  const [prevChapter, setPrevChapter] = useState<{ id: string; chapter_number: number; chapter_number_text: string } | null>(null);
+  const [nextChapter, setNextChapter] = useState<{ id: string; chapter_number: number | null; chapter_number_text: string } | null>(null);
+  const [prevChapter, setPrevChapter] = useState<{ id: string; chapter_number: number | null; chapter_number_text: string } | null>(null);
 
   // Active Reader state
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -487,10 +487,7 @@ export const Reader: React.FC<ReaderProps> = ({
                     alt={`Página ${p.index}`}
                     loading="lazy"
                     className="w-full h-auto object-contain max-w-full pointer-events-none"
-                    onError={(e) => {
-                      // Direct fallback if proxy has issues
-                      (e.target as HTMLImageElement).src = p.url;
-                    }}
+                    onError={(event) => { event.currentTarget.alt = 'Image could not be loaded through the MangaX proxy.'; }}
                   />
                 </div>
               ))}
@@ -536,7 +533,7 @@ export const Reader: React.FC<ReaderProps> = ({
                     src={`/api/proxy/image?url=${encodeURIComponent(pages[currentPage].url)}`}
                     alt={`Página ${currentPage + 1}`}
                     className="max-h-[90vh] w-auto object-contain pointer-events-none"
-                    onError={(e) => { (e.target as HTMLImageElement).src = pages[currentPage].url; }}
+                    onError={(event) => { event.currentTarget.alt = 'Image could not be loaded through the MangaX proxy.'; }}
                   />
                 </div>
               )}
@@ -546,7 +543,7 @@ export const Reader: React.FC<ReaderProps> = ({
                     src={`/api/proxy/image?url=${encodeURIComponent(pages[currentPage - 1].url)}`}
                     alt={`Página ${currentPage}`}
                     className="max-h-[90vh] w-auto object-contain pointer-events-none"
-                    onError={(e) => { (e.target as HTMLImageElement).src = pages[currentPage - 1].url; }}
+                    onError={(event) => { event.currentTarget.alt = 'Image could not be loaded through the MangaX proxy.'; }}
                   />
                 </div>
               )}
@@ -563,7 +560,7 @@ export const Reader: React.FC<ReaderProps> = ({
                 src={`/api/proxy/image?url=${encodeURIComponent(pages[currentPage - 1].url)}`}
                 alt={`Página ${currentPage}`}
                 className="max-h-[92vh] max-w-[94vw] object-contain shadow-2xl pointer-events-none"
-                onError={(e) => { (e.target as HTMLImageElement).src = pages[currentPage - 1].url; }}
+                onError={(event) => { event.currentTarget.alt = 'Image could not be loaded through the MangaX proxy.'; }}
               />
             ) : null}
           </div>

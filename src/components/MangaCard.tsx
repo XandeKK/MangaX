@@ -1,6 +1,7 @@
 import React from 'react';
 import { BookOpen, Check, Clock } from 'lucide-react';
 import { Manga } from '../types';
+import { proxiedImageUrl } from '../services/api';
 
 interface MangaCardProps {
   manga: Manga;
@@ -30,7 +31,7 @@ export const MangaCard: React.FC<MangaCardProps> = ({ manga, onSelect, onQuickRe
       {/* Cover Image Container (3:4 ratio) */}
       <div className="relative aspect-[3/4] w-full bg-neutral-950 overflow-hidden">
         <img
-          src={manga.cover_url}
+          src={proxiedImageUrl(manga.cover_url)}
           alt={manga.title}
           referrerPolicy="no-referrer"
           loading="lazy"

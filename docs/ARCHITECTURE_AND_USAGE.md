@@ -1,116 +1,54 @@
-# MangaX — Manga Tracker & Reader — Documentação de Arquitetura e Uso
+# MangaX Architecture and Usage
 
-Inspirado no projeto **FRANK Scanlation** de Fabio Akita ([akitaonrails/frank_scanlation](https://github.com/akitaonrails/frank_scanlation)).
+## Overview
 
----
+MangaX is a self-hosted React and TypeScript application. Express serves the frontend and `/api`; source adapters provide website-specific metadata, chapter, and page extraction. SQLite stores the library and reading data.
 
-## 1. Visão Geral da Arquitetura
-
-O sistema foi desenvolvido seguindo estrita separação de responsabilidades em camadas desacopladas:
-
-1. **Camada de Persistência (SQLite / `sql.js`):**
-   - Banco de dados relacional SQLite com migrações versionadas (`schema_migrations`), integridade referencial com chaves estrangeiras (`PRAGMA foreign_keys = ON`), transações e índices dedicados (`idx_chapters_manga_num`, `idx_chapters_unread`, `idx_sources_manga`, etc.).
-   - Arquivo persistido em `data/frank_manga.sqlite`.
-
-2. **Motores de Fontes Extensíveis (`src/server/sources/`):**
-   - Interface comum `MangaSource` definindo: `canHandle(url)`, `extractManga(url)`, `extractChapters(urlOrId)`, `extractPages(chapterId)`, `search(query)`.
-   - **MangaDex API (`MangaDexSource`):** Integração completa com a API oficial do MangaDex (`https://api.mangadex.org`) para pesquisa, extração de capas, metadados, feeds de capítulos em múltiplos idiomas e URLs de alta resolução via servidores MangaDex@Home.
-   - **Web Scraper Universal HTML (`GenericHtmlSource`):** Extrator baseado em Cheerio com detecção de OpenGraph, seletores semânticos e analisadores de expressões regulares para identificação de números decimais (ex: 10.5), especiais e capítulos extras.
-   - **Arquivo Offline / Amostras Locais (`SampleMangaSource`):** Garante testes determinísticos e leitura contínua mesmo sem conexão externa.
-
-3. **Agendador de Monitoramento (`src/server/services/monitoring.ts`):**
-   - Execução autônoma em segundo plano com intervalo configurável (padrão 30 minutos).
-   - Controle de concorrência com processamento em lotes (evita sobrecarga nos servidores das fontes).
-   - Detecção precisa de novos capítulos por comparação normalizada contra o histórico armazenado em SQLite.
-   - Prevenção ativa de duplicações.
-   - Registro detalhado de telemetria em `check_logs` (duração em ms, capítulos encontrados, novos lançamentos, falhas transitórias).
-   - Geração de notificações persistentes.
-
-4. **Proteção contra Anúncios e Sanitização (`src/server/services/security.ts`):**
-   - Proxy seguro de imagens e controle de navegação:
-     - Bloqueio de domínios predatórios de publicidade, pop-ups e redirecionamento malicioso (ex: popcash, popads, monetag, adsterra, exoclick, outbrain).
-     - Remoção de referrers invasivos e proteção contra rastreadores de terceiros.
-     - Registro de eventos bloqueados para diagnóstico do usuário.
-
-5. **Integrated Reader (`src/components/Reader.tsx`):**
-   - 4 Modos de leitura intercambiáveis: **Single** (página única), **Double** (páginas duplas), **Book** (spreads com ordem tradicional de mangá da direita para a esquerda - RTL), **Webtoon** (rolagem vertical com scroll snap).
-   - Atalhos de teclado oficiais mapeados:
-     - `Space`: Avançar página ou spread
-     - `ArrowLeft` / `ArrowRight`: Navegação entre páginas
-     - `D`: Alternar Single → Double → Book
-     - `N`: Alternar filtro noturno (Desativado → Noturno suave → Sépia → Invertido de alto contraste)
-     - `S`: Ativar ou desativar scroll snap
-     - `Enter`: Próximo capítulo
-     - `Backspace`: Capítulo anterior
-     - `?`: Modal de ajuda dos atalhos
-     - `Esc`: Fechar Reader
-   - Detecção de conflitos de digitação (ignora atalhos quando o usuário digita em inputs).
-   - Atualização automática da última página lida e marcação de conclusão do capítulo.
-
----
-
-## 2. Instruções de Instalação, Compilação e Execução
-
-### Pré-requisitos
-- Node.js versão 20+ ou 22+.
-- Gerenciador de pacotes `npm`.
-
-### Instalação de Dependências
-```bash
-npm install
+```text
+React components → frontend API client → Express routes → registered MangaSource adapters → SQLite
+                                                              ↑
+                                                    chapter monitoring
 ```
 
-### Execução em Modo de Desenvolvimento
-O aplicativo inicia o servidor Express integrado ao Vite na porta 3000:
-```bash
-npm run dev
-```
-Acesse: `http://localhost:3000`
+The server entry point is `server.ts`. Vite runs as Express middleware during development; production serves the `dist/` build.
 
-### Execução dos Testes Automatizados
-```bash
-npx tsx tests/suite.test.ts
-```
+## Source adapter architecture
 
-### Compilação de Produção
-```bash
-npm run build
-```
-Os artefatos compilados e otimizados serão gerados no diretório `dist/`.
+Every website integration implements `MangaSource` from `src/server/sources/types.ts`. The adapter registry in `src/server/sources/index.ts` maps registered domains to explicit TypeScript modules and rejects overlapping registrations. Requests never select or load code dynamically.
 
----
+- `MangaDexSource` in `src/server/sources/mangadex.ts` uses the structured MangaDex API.
+- `SampleMangaSource` in `src/server/sources/sample.ts` provides local demo data.
+- Reviewed additional adapters are imported in `src/server/sources/custom/index.ts`.
+- `src/server/services/safe-http.ts` applies HTTP/HTTPS, address, redirect, timeout, and response-size checks to adapter requests.
 
-## 3. Como Adicionar Novas Fontes
+There is no generic HTML scraper. If no registered adapter supports a URL, Add Manga and source APIs return an unsupported-domain error. The **Supported Sources** page lists adapter names, domains, and current health state.
 
-Para adicionar um novo site de scanlation ou fonte de mangá:
-1. Crie um arquivo em `src/server/sources/<nome-da-fonte>.ts`.
-2. Implemente a interface `MangaSource`:
-   ```typescript
-   import { MangaSource, MangaMetadata, ChapterMetadata, ChapterPagesResult } from './types';
+See [MangaX Adapter Development Guide](ADAPTER_DEVELOPMENT.md) for the contract and workflow.
 
-   export class MinhaNovaFonte implements MangaSource {
-     id = 'minha-fonte';
-     name = 'Nome da Fonte';
-     baseUrl = 'https://meusite.com';
+## Database and migrations
 
-     canHandle(url: string): boolean {
-       return url.includes('meusite.com');
-     }
+The default file is `data/manga_x.sqlite`; `MANGAX_DATA_DIR` selects another directory. `sql.js` loads the database into memory and writes the exported SQLite file after updates.
 
-     async extractManga(url: string): Promise<MangaMetadata> { ... }
-     async extractChapters(urlOrExternalId: string): Promise<ChapterMetadata[]> { ... }
-     async extractPages(chapterUrlOrId: string): Promise<ChapterPagesResult> { ... }
-   }
-   ```
-3. Registre a nova classe na lista de fontes em `src/server/sources/index.ts`. O agendador e o leitor passarão a utilizá-la automaticamente.
+The migrations in `src/server/db/database.ts` create the library, sources, chapters, preferences, monitoring data, and later metadata fields. Migration 5 allows special chapters without numeric chapter values. Migration 6 retires the historical `source_parsers` table and changes tracked parser source types to `unsupported`. It does not delete manga, chapter rows, reader preferences, or progress. Earlier migration records remain unchanged for installed databases.
 
----
+## Main workflows
 
-## 4. Limitações Conhecidas e Suposições do Ambiente
+### Adding a manga
 
-1. **Ambiente Web vs Tauri 2 Desktop:**
-   - No ambiente em nuvem do Google AI Studio (Linux sem display server X11/Wayland e sem compilação Rust/WebKitGTK local), a aplicação foi arquitetada como uma aplicação Full-Stack Node/TypeScript/Express + SQLite + React/Vite.
-   - Todas as regras de negócio, persistência, atalhos, leitor e agendador funcionam 100% no navegador.
-   - Para empacotar em Tauri 2 em sua máquina local, basta apontar a configuração `tauri.conf.json` para o frontend Vite (`dist/` ou `http://localhost:3000`) e mapear os comandos para as rotas da API já estruturadas.
-2. **Fontes protegidas por Cloudflare Turnstile / Captcha:**
-   - Sites que utilizam proteção contra robôs com desafio Cloudflare interativo exigem integração com solvers de captcha ou headers de sessão. Para essas fontes, utilize fontes com APIs abertas como o MangaDex ou adicione a fonte via cadastro manual/fontes alternativas.
+`AddMangaModal` sends the entered URL to `/api/sources/preview`. `getSourceForUrl` selects the registered adapter by domain. MangaX previews metadata, chapter count, and a sample reader page. On save, `/api/mangas` stores the title and chapters. A supplied URL that has no registered adapter is rejected; users can still add a manual title without supplying a website URL.
+
+### Reading
+
+`Reader` requests `/api/reader/chapter/:id`. The route selects the source adapter using the stored chapter URL, gets ordered image URLs, and returns the stored reading progress and preferences. Images continue to load through `/api/proxy/image`.
+
+### Monitoring
+
+`MonitoringService` checks active source URLs through the same adapter registry. It deduplicates chapters by normalized URL so repeated chapter numbers across translations or editions remain distinct. Failures are recorded in `check_logs` and on the source row.
+
+## Security and limits
+
+- Only HTTP and HTTPS URLs without credentials are accepted for external sources.
+- The shared safe HTTP utility blocks local/private network addresses, rechecks redirect destinations, and limits time, redirects, and response size.
+- Reader images use the protected proxy and existing advertisement block list.
+- Adapter modules are trusted executable code. Review them before explicit registration; do not load user uploads or pass application secrets to an adapter.
+- MangaDex uses a dedicated API adapter. JavaScript-rendered websites require a reviewed TypeScript adapter or a documented API; MangaX does not fall back to selector rules or heuristic scraping.

@@ -5,15 +5,16 @@ export interface MangaMetadata {
   id?: string;
   title: string;
   altTitles?: string[];
-  description: string;
-  coverUrl: string;
-  type: MangaType;
-  status: MangaStatus;
+  description?: string;
+  coverUrl?: string;
+  type?: MangaType;
+  status?: MangaStatus;
   author?: string;
   artist?: string;
   mainUrl: string;
   externalId?: string;
   genres?: string[];
+  warnings?: string[];
 }
 
 export interface ChapterMetadata {
@@ -21,13 +22,16 @@ export interface ChapterMetadata {
   mangaId?: string;
   sourceId?: string;
   title: string;
-  chapterNumber: number;
+  chapterNumber: number | null;
   chapterNumberText: string;
   volume?: string;
   url: string;
   releaseDate?: string;
   language?: string;
   pagesCount?: number;
+  subtitle?: string;
+  sourcePosition?: number;
+  warnings?: string[];
 }
 
 export interface ChapterPagesResult {
@@ -42,12 +46,17 @@ export interface ChapterPagesResult {
   chapterNumberText?: string;
   nextChapterId?: string | null;
   prevChapterId?: string | null;
+  warnings?: string[];
 }
 
 export interface MangaSource {
   id: string;
   name: string;
   baseUrl: string;
+  /** Exact hostnames this reviewed adapter supports. */
+  domains: string[];
+  /** Whether hosts below a listed domain are also supported. */
+  allowSubdomains?: boolean;
   canHandle(url: string): boolean;
   extractManga(url: string): Promise<MangaMetadata>;
   extractChapters(urlOrExternalId: string): Promise<ChapterMetadata[]>;

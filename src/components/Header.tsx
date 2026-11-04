@@ -3,8 +3,8 @@ import { BookOpen, Bell, Plus, ShieldCheck, Activity, HelpCircle } from 'lucide-
 import { NotificationItem } from '../types';
 
 interface HeaderProps {
-  activeTab: 'library' | 'monitoring' | 'diagnostic';
-  setActiveTab: (tab: 'library' | 'monitoring' | 'diagnostic') => void;
+  activeTab: 'library' | 'monitoring' | 'diagnostic' | 'sources';
+  setActiveTab: (tab: 'library' | 'monitoring' | 'diagnostic' | 'sources') => void;
   onOpenAddModal: () => void;
   onOpenShortcuts: () => void;
   notifications: NotificationItem[];
@@ -65,6 +65,12 @@ export const Header: React.FC<HeaderProps> = ({
               }`}
             >
               Fontes &amp; Diagnóstico
+            </button>
+            <button
+              onClick={() => setActiveTab('sources')}
+              className={`transition-colors whitespace-nowrap shrink-0 hover:text-white ${activeTab === 'sources' ? 'text-amber-400 border-b-2 border-amber-400 py-4 -mb-[2px]' : ''}`}
+            >
+              Supported Sources
             </button>
             <button
               onClick={onOpenShortcuts}

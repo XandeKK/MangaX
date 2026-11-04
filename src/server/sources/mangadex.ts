@@ -1,13 +1,35 @@
 import { MangaSource, MangaMetadata, ChapterMetadata, ChapterPagesResult, MangaType } from './types';
+import { safeFetch } from '../services/safe-http';
 
 export class MangaDexSource implements MangaSource {
   id = 'mangadex';
   name = 'MangaDex (API Oficial)';
   baseUrl = 'https://mangadex.org';
+  domains = ['mangadex.org'];
+  allowSubdomains = true;
   private apiBase = 'https://api.mangadex.org';
 
   canHandle(url: string): boolean {
-    return url.includes('mangadex.org') || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(url.trim());
+    try {
+      const host = new URL(url).hostname.toLowerCase();
+      return host === 'mangadex.org' || host.endsWith('.mangadex.org');
+    } catch {
+      return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(url.trim());
+    }
+  }
+
+  protected async fetchJson(url: string): Promise<any> {
+    const response = await safeFetch(url, {
+      allowedDomains: ['api.mangadex.org'],
+      timeoutMs: 12000,
+      maxBytes: 8 * 1024 * 1024,
+      headers: { Accept: 'application/json', 'User-Agent': 'MangaX/1.0 (+self-hosted manga library)' }
+    });
+    if (response.status < 200 || response.status >= 300) {
+      throw new Error(`MangaDex API returned HTTP ${response.status}.`);
+    }
+    try { return JSON.parse(Buffer.from(response.body).toString('utf8')); }
+    catch { throw new Error('MangaDex API returned invalid JSON.'); }
   }
 
   private extractIdFromUrl(url: string): string {
@@ -22,12 +44,7 @@ export class MangaDexSource implements MangaSource {
 
   async extractManga(url: string): Promise<MangaMetadata> {
     const mangaId = this.extractIdFromUrl(url);
-    const res = await fetch(`${this.apiBase}/manga/${mangaId}?includes[]=cover_art&includes[]=author&includes[]=artist`);
-    if (!res.ok) {
-      throw new Error(`Falha ao consultar MangaDex API (${res.status}): ${res.statusText}`);
-    }
-
-    const data = await res.json();
+    const data = await this.fetchJson(`${this.apiBase}/manga/${mangaId}?includes[]=cover_art&includes[]=author&includes[]=artist`);
     const attributes = data.data.attributes;
     const relationships = data.data.relationships || [];
 
@@ -85,30 +102,25 @@ export class MangaDexSource implements MangaSource {
     const mangaId = this.extractIdFromUrl(urlOrExternalId);
     
     // We fetch chapters prioritizing Portuguese (pt-br), then English
-    const res = await fetch(
+    const data = await this.fetchJson(
       `${this.apiBase}/manga/${mangaId}/feed?translatedLanguage[]=pt-br&translatedLanguage[]=en&limit=100&order[chapter]=desc&order[volume]=desc&includes[]=scanlation_group`
     );
-
-    if (!res.ok) {
-      throw new Error(`Erro ao obter capítulos do MangaDex: ${res.status}`);
-    }
-
-    const data = await res.json();
     const items = data.data || [];
 
     const chaptersMap = new Map<string, ChapterMetadata>();
 
     for (const item of items) {
       const attr = item.attributes;
-      const chNum = attr.chapter ? parseFloat(attr.chapter) : 0;
+      const chNum = attr.chapter ? parseFloat(attr.chapter) : null;
       const chText = attr.chapter ? `Capítulo ${attr.chapter}` : (attr.title || 'Capítulo Extra');
-      const key = `${attr.chapter || 'extra'}-${attr.translatedLanguage}`;
+      // Chapter numbers can repeat across language releases or editions; the API UUID is the identity.
+      const key = item.id;
 
       if (!chaptersMap.has(key)) {
         chaptersMap.set(key, {
           id: item.id,
           title: attr.title ? `${chText}: ${attr.title}` : chText,
-          chapterNumber: isNaN(chNum) ? 0 : chNum,
+          chapterNumber: chNum === null || isNaN(chNum) ? null : chNum,
           chapterNumberText: chText,
           volume: attr.volume || undefined,
           url: `https://mangadex.org/chapter/${item.id}`,
@@ -120,18 +132,17 @@ export class MangaDexSource implements MangaSource {
     }
 
     // Sort chapters descending by chapter number
-    return Array.from(chaptersMap.values()).sort((a, b) => b.chapterNumber - a.chapterNumber);
+    return Array.from(chaptersMap.values()).sort((a, b) => {
+      if (a.chapterNumber === null) return b.chapterNumber === null ? a.url.localeCompare(b.url) : 1;
+      if (b.chapterNumber === null) return -1;
+      return b.chapterNumber - a.chapterNumber || a.url.localeCompare(b.url);
+    });
   }
 
   async extractPages(chapterUrlOrId: string): Promise<ChapterPagesResult> {
     const chapterId = this.extractIdFromUrl(chapterUrlOrId);
     
-    const res = await fetch(`${this.apiBase}/at-home/server/${chapterId}`);
-    if (!res.ok) {
-      throw new Error(`Falha ao obter páginas do servidor MangaDex@Home (${res.status})`);
-    }
-
-    const json = await res.json();
+    const json = await this.fetchJson(`${this.apiBase}/at-home/server/${chapterId}`);
     const baseUrl = json.baseUrl;
     const hash = json.chapter.hash;
     const files: string[] = json.chapter.data || [];
@@ -149,10 +160,9 @@ export class MangaDexSource implements MangaSource {
 
   async search(query: string): Promise<MangaMetadata[]> {
     if (!query.trim()) return [];
-    const res = await fetch(`${this.apiBase}/manga?title=${encodeURIComponent(query)}&limit=8&includes[]=cover_art`);
-    if (!res.ok) return [];
-
-    const data = await res.json();
+    let data: any;
+    try { data = await this.fetchJson(`${this.apiBase}/manga?title=${encodeURIComponent(query)}&limit=8&includes[]=cover_art`); }
+    catch { return []; }
     const results: MangaMetadata[] = [];
 
     for (const item of data.data || []) {

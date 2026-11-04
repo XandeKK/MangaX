@@ -12,11 +12,12 @@ import { MonitoringView } from './components/MonitoringView';
 import { DiagnosticView } from './components/DiagnosticView';
 import { ShortcutsModal } from './components/ShortcutsModal';
 import { NotificationsDrawer } from './components/NotificationsDrawer';
-import { api } from './services/api';
+import { SourceManagementView } from './components/SourceManagementView';
+import { api, proxiedImageUrl } from './services/api';
 import { Manga, NotificationItem } from './types';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'library' | 'monitoring' | 'diagnostic'>('library');
+  const [activeTab, setActiveTab] = useState<'library' | 'monitoring' | 'diagnostic' | 'sources'>('library');
   const [mangas, setMangas] = useState<Manga[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -103,7 +104,11 @@ export default function App() {
       let targetChapterId = manga.last_read_chapter_id;
       if (!targetChapterId) {
         // Find first chapter (oldest by chapter number)
-        const sorted = details.chapters.slice().sort((a, b) => a.chapter_number - b.chapter_number);
+        const sorted = details.chapters.slice().sort((a, b) => {
+          if (a.chapter_number === null) return b.chapter_number === null ? a.url.localeCompare(b.url) : 1;
+          if (b.chapter_number === null) return -1;
+          return a.chapter_number - b.chapter_number || a.url.localeCompare(b.url);
+        });
         targetChapterId = sorted[0]?.id;
       }
 
@@ -256,7 +261,7 @@ export default function App() {
                   >
                     <div className="flex items-center gap-3.5 min-w-0">
                       <div className="w-12 h-16 rounded-lg bg-neutral-950 overflow-hidden shrink-0 border border-neutral-800">
-                        <img src={m.cover_url} alt={m.title} className="w-full h-full object-cover" />
+                        <img src={proxiedImageUrl(m.cover_url)} alt={m.title} className="w-full h-full object-cover" />
                       </div>
                       <div className="min-w-0">
                         <h3 className="text-sm font-semibold text-white truncate">{m.title}</h3>
@@ -323,7 +328,8 @@ export default function App() {
         {activeTab === 'monitoring' && <MonitoringView />}
 
         {/* View 3: Fontes & Diagnóstico */}
-        {activeTab === 'diagnostic' && <DiagnosticView />}
+        {activeTab === 'diagnostic' && <DiagnosticView onOpenSources={() => setActiveTab('sources')} />}
+        {activeTab === 'sources' && <SourceManagementView />}
 
       </main>
 

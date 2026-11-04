@@ -25,9 +25,11 @@ export class SampleMangaSource implements MangaSource {
   id = 'sample-local';
   name = 'MangaX Sample & Offline Archive';
   baseUrl = 'https://frank.local';
+  domains = ['frank.local'];
 
   canHandle(url: string): boolean {
-    return url.includes('sample-') || url.includes('frank.local') || url.includes('solo-leveling-seed') || url.includes('frieren-seed');
+    try { return new URL(url).hostname.toLowerCase() === 'frank.local'; }
+    catch { return false; }
   }
 
   async extractManga(url: string): Promise<MangaMetadata> {

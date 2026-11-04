@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Search, Globe, Plus, AlertCircle, Check, Loader2, Sparkles, BookOpen } from 'lucide-react';
-import { api } from '../services/api';
+import { api, proxiedImageUrl } from '../services/api';
 import { MangaType, MangaStatus } from '../types';
 
 interface AddMangaModalProps {
@@ -10,8 +10,6 @@ interface AddMangaModalProps {
 }
 
 export const AddMangaModal: React.FC<AddMangaModalProps> = ({ isOpen, onClose, onSuccess }) => {
-  if (!isOpen) return null;
-
   const [mode, setMode] = useState<'url' | 'search'>('url');
   const [url, setUrl] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,8 +25,12 @@ export const AddMangaModal: React.FC<AddMangaModalProps> = ({ isOpen, onClose, o
   const [status, setStatus] = useState<MangaStatus>('ongoing');
   const [author, setAuthor] = useState('');
   const [artist, setArtist] = useState('');
+  const [genres, setGenres] = useState('');
+  const [altTitles, setAltTitles] = useState('');
   const [detectedChaptersCount, setDetectedChaptersCount] = useState<number | null>(null);
   const [sourceName, setSourceName] = useState<string | null>(null);
+  const [sourceHealth, setSourceHealth] = useState<Record<string, string> | null>(null);
+  const [previewWarnings, setPreviewWarnings] = useState<string[]>([]);
 
   // Search results
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -56,6 +58,11 @@ export const AddMangaModal: React.FC<AddMangaModalProps> = ({ isOpen, onClose, o
     try {
       const res = await api.previewUrl(target);
       const meta = res.metadata;
+      setSourceName(res.sourceName || 'Fonte detectada');
+      setDetectedChaptersCount(res.chaptersCount ?? 0);
+      setSourceHealth(res.health || null);
+      setPreviewWarnings(res.warnings || []);
+      if (!meta) throw new Error(res.warnings?.join(' ') || 'The page was reached, but a manga title could not be detected.');
       setTitle(meta.title || '');
       setDescription(meta.description || '');
       setCoverUrl(meta.coverUrl || '');
@@ -63,7 +70,8 @@ export const AddMangaModal: React.FC<AddMangaModalProps> = ({ isOpen, onClose, o
       setStatus(meta.status || 'ongoing');
       setAuthor(meta.author || '');
       setArtist(meta.artist || '');
-      setSourceName(res.sourceName || 'Fonte detectada');
+      setGenres(Array.isArray(meta.genres) ? meta.genres.join(', ') : '');
+      setAltTitles(Array.isArray(meta.altTitles) ? meta.altTitles.join(', ') : '');
     } catch (err: any) {
       setError(err.message || 'Falha ao extrair metadados. Você ainda pode preencher os campos manualmente.');
     } finally {
@@ -134,7 +142,9 @@ export const AddMangaModal: React.FC<AddMangaModalProps> = ({ isOpen, onClose, o
         type,
         status,
         author: author.trim() || undefined,
-        artist: artist.trim() || undefined
+        artist: artist.trim() || undefined,
+        genres: genres.split(',').map(value => value.trim()).filter(Boolean),
+        altTitles: altTitles.split(',').map(value => value.trim()).filter(Boolean)
       });
 
       onSuccess(res.id);
@@ -145,6 +155,8 @@ export const AddMangaModal: React.FC<AddMangaModalProps> = ({ isOpen, onClose, o
       setIsSubmitting(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
@@ -231,7 +243,7 @@ export const AddMangaModal: React.FC<AddMangaModalProps> = ({ isOpen, onClose, o
                   >
                     <div className="w-12 h-16 rounded bg-neutral-900 overflow-hidden shrink-0">
                       {item.coverUrl ? (
-                        <img src={item.coverUrl} alt={item.title} className="w-full h-full object-cover" />
+                        <img src={proxiedImageUrl(item.coverUrl)} alt={item.title} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-neutral-600">
                           <BookOpen className="w-5 h-5" />
@@ -298,6 +310,18 @@ export const AddMangaModal: React.FC<AddMangaModalProps> = ({ isOpen, onClose, o
                     <Check className="w-3 h-3" />
                     <span>Metadados obtidos via {sourceName}</span>
                   </p>
+                )}
+                {sourceHealth && (
+                  <div className="mt-3 rounded-xl border border-neutral-800 bg-neutral-950/70 p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-xs font-semibold text-white">Automatic source check</p>
+                      <p className="text-[11px] text-neutral-400">{detectedChaptersCount} chapters detected</p>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {Object.entries(sourceHealth).map(([name, status]) => <span key={name} className={`rounded-full border px-2 py-1 text-[10px] ${status === 'working' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : status === 'failed' ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' : 'border-amber-500/30 bg-amber-500/10 text-amber-200'}`}>{name}: {status}</span>)}
+                    </div>
+                    {previewWarnings.length > 0 && <p className="mt-2 text-[11px] text-amber-200">{previewWarnings.slice(0, 2).join(' ')}</p>}
+                  </div>
                 )}
               </div>
 
@@ -376,6 +400,17 @@ export const AddMangaModal: React.FC<AddMangaModalProps> = ({ isOpen, onClose, o
                     placeholder="Nome do ilustrador"
                     className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3.5 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400"
                   />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-neutral-300 mb-1.5">Gêneros</label>
+                  <input type="text" value={genres} onChange={e => setGenres(e.target.value)} placeholder="Ação, aventura, fantasia" className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3.5 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-neutral-300 mb-1.5">Títulos alternativos</label>
+                  <input type="text" value={altTitles} onChange={e => setAltTitles(e.target.value)} placeholder="Separe os títulos por vírgula" className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3.5 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400" />
                 </div>
               </div>
 

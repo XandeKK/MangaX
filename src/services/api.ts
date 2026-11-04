@@ -1,5 +1,14 @@
 import { Manga, Source, Chapter, ReaderPreferences, NotificationItem, CheckLog, MonitoringStatus } from '../types';
 
+export function proxiedImageUrl(rawUrl: string | null | undefined): string {
+  if (!rawUrl) return '';
+  try {
+    const url = new URL(rawUrl);
+    if (!['http:', 'https:'].includes(url.protocol)) return '';
+    return `/api/proxy/image?url=${encodeURIComponent(url.href)}`;
+  } catch { return ''; }
+}
+
 export const api = {
   // Manga endpoints
   async getMangas(params?: { type?: string; status?: string; search?: string; sort?: string }): Promise<Manga[]> {
@@ -29,6 +38,8 @@ export const api = {
     status?: string;
     author?: string;
     artist?: string;
+    genres?: string[];
+    altTitles?: string[];
   }): Promise<{ id: string; title: string; chaptersCount: number }> {
     const res = await fetch('/api/mangas', {
       method: 'POST',
@@ -53,7 +64,9 @@ export const api = {
         type: data.type,
         status: data.status,
         author: data.author,
-        artist: data.artist
+        artist: data.artist,
+        genres: data.genres,
+        altTitles: data.alt_titles
       })
     });
     if (!res.ok) {
@@ -88,7 +101,7 @@ export const api = {
     if (!res.ok) throw new Error('Erro ao remover fonte');
   },
 
-  async previewUrl(url: string): Promise<{ metadata: any; sourceName: string }> {
+  async previewUrl(url: string): Promise<{ metadata: any; sourceName: string; sourceId: string; chaptersCount: number; health: Record<string, string>; warnings: string[] }> {
     const res = await fetch('/api/sources/preview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -216,11 +229,17 @@ export const api = {
 
   // Diagnostic
   async getDiagnostics(): Promise<{
-    health: { id: string; name: string; status: 'ok' | 'degraded' | 'offline'; latencyMs: number }[];
+    health: { id: string; name: string; status: 'ok' | 'degraded' | 'offline' | 'registered'; latencyMs: number; error?: string }[];
     security: { totalBlocked: number; recentLogs: { timestamp: number; url: string; reason: string }[] };
   }> {
     const res = await fetch('/api/sources/diagnostic');
     if (!res.ok) throw new Error('Erro ao obter diagnóstico');
     return res.json();
+  },
+  async getRegisteredSources(): Promise<{ id: string; name: string; domains: string[]; allowSubdomains: boolean }[]> {
+    const res = await fetch('/api/sources/registry');
+    if (!res.ok) throw new Error('Could not load registered source adapters.');
+    const result = await res.json();
+    return result.sources;
   }
 };

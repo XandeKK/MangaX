@@ -109,8 +109,8 @@ export class MonitoringService {
     try {
       await getDatabase();
       const sourcesQuery = targetMangaId
-        ? 'SELECT s.*, m.title as manga_title, m.last_known_chapter_number FROM sources s JOIN mangas m ON s.manga_id = m.id WHERE s.is_active = 1 AND s.manga_id = ?'
-        : 'SELECT s.*, m.title as manga_title, m.last_known_chapter_number FROM sources s JOIN mangas m ON s.manga_id = m.id WHERE s.is_active = 1';
+        ? "SELECT s.*, m.title as manga_title, m.last_known_chapter_number FROM sources s JOIN mangas m ON s.manga_id = m.id WHERE s.is_active = 1 AND NOT (s.source_type = 'custom' AND s.url LIKE 'custom://%') AND s.manga_id = ?"
+        : "SELECT s.*, m.title as manga_title, m.last_known_chapter_number FROM sources s JOIN mangas m ON s.manga_id = m.id WHERE s.is_active = 1 AND NOT (s.source_type = 'custom' AND s.url LIKE 'custom://%')";
 
       const sources = dbAll<any>(sourcesQuery, targetMangaId ? [targetMangaId] : []);
       const config = this.getConfig();
@@ -178,28 +178,27 @@ export class MonitoringService {
     }
 
     // Get currently known chapters from database for this manga
-    const existingChapters = dbAll<{ id: string; chapter_number: number; chapter_number_text: string }>(
-      'SELECT id, chapter_number, chapter_number_text FROM chapters WHERE manga_id = ?',
+    const existingChapters = dbAll<{ id: string; url: string }>(
+      'SELECT id, url FROM chapters WHERE manga_id = ?',
       [source.manga_id]
     );
 
-    const existingNumSet = new Set<number>();
-    for (const ec of existingChapters) {
-      existingNumSet.add(ec.chapter_number);
-    }
+    const existingUrlSet = new Set(existingChapters.map(chapter => normalizeChapterUrl(chapter.url)));
 
     let newCount = 0;
     let maxFoundNumber = source.last_known_chapter_number || 0;
 
     for (const chapter of chapters) {
-      if (chapter.chapterNumber > maxFoundNumber) {
+      if (typeof chapter.chapterNumber === 'number' && chapter.chapterNumber > maxFoundNumber) {
         maxFoundNumber = chapter.chapterNumber;
       }
 
-      // Check if this chapter is already stored
-      if (!existingNumSet.has(chapter.chapterNumber)) {
+      const normalizedUrl = normalizeChapterUrl(chapter.url);
+      // Chapter numbers can repeat across languages, sources, and special editions; URLs are the stable identity.
+      if (normalizedUrl && !existingUrlSet.has(normalizedUrl)) {
         newCount++;
-        const chapterId = `ch-${source.manga_id}-${chapter.chapterNumber}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+        existingUrlSet.add(normalizedUrl);
+        const chapterId = `ch-${source.manga_id}-${stableHash(normalizedUrl)}`;
 
         dbRun(
           `INSERT INTO chapters (id, manga_id, source_id, title, chapter_number, chapter_number_text, volume, url, release_date, detected_at, is_read)
@@ -213,7 +212,7 @@ export class MonitoringService {
             chapter.chapterNumberText,
             chapter.volume || null,
             chapter.url,
-            chapter.releaseDate || new Date().toISOString().split('T')[0],
+            chapter.releaseDate || null,
             Date.now()
           ]
         );
@@ -250,6 +249,22 @@ export class MonitoringService {
 
     return { newCount, totalFound: chapters.length };
   }
+}
+
+function normalizeChapterUrl(rawUrl: string): string {
+  try {
+    const url = new URL(rawUrl);
+    url.hash = '';
+    url.hostname = url.hostname.toLowerCase();
+    if (url.pathname.length > 1) url.pathname = url.pathname.replace(/\/+$/, '');
+    return url.href;
+  } catch { return ''; }
+}
+
+function stableHash(value: string): string {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index++) hash = Math.imul(hash ^ value.charCodeAt(index), 16777619);
+  return (hash >>> 0).toString(36);
 }
 
 export const monitoringService = new MonitoringService();
